@@ -46,7 +46,7 @@ fszs2 = {720: 18, 1080: 30}
 fszs3 = {720: 15, 1080: 25}
 fszs4 = {720: 9, 1080: 15}
 
-makemovie = True
+makemovie = False
 
 # background color
 bkcol = 'black'
