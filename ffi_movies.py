@@ -6,7 +6,6 @@ Created on Mon Dec 17 14:59:08 2018
 @author: ekruse
 """
 
-
 import matplotlib.colors as colors
 from astropy.io import fits
 import numpy as np
