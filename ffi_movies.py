@@ -14,13 +14,13 @@ import os
 from glob import glob
 from datetime import datetime
 import matplotlib.font_manager as fm
-cd = os.path.abspath(os.path.dirname(__file__))
-
+#cd = os.path.abspath(os.path.dirname(__file__))
+cd = '/data/tessraid/ekruse1/tessmovies'
 
 sector = 1
-dataloc = '/Users/ekruse/Research/tessmovie/ffis/sector1'
+dataloc = '/data/tessraid/data/ffis/sector1'
 
-outdir = '/Users/ekruse/Research/tessmovie/movies/sector1/all'
+outdir = '/data/tessraid/ekruse1/tessmovies/movies/sector1/all'
 
 cmap = 'viridis'
 #cmap = 'plasma'
