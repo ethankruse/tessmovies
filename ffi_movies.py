@@ -15,21 +15,19 @@ import os
 from glob import glob
 from datetime import datetime
 import matplotlib.font_manager as fm
-#cd = os.path.abspath(os.path.dirname(__file__))
-cd = '/data/tessraid/ekruse1/tessmovies'
-
+import sys
 
 sector = 1
-dataloc = '/data/tessraid/data/ffis/sector1'
-
-outdir = '/data/tessraid/ekruse1/tessmovies/movies/sector1/all'
+cam = 3
+ccd = 2
+makemovie = False
 
 cmap = 'viridis'
 #cmap = 'plasma'
 #cmap = 'gray'
 
 fontcol = 'white'
-fontfile = os.path.join(cd, 'Avenir-Black.otf')
+fontfile = 'Avenir-Black.otf'
 
 titlestr = 'TESS: The Movie\nSector {0}'.format(sector)
 
@@ -42,12 +40,10 @@ reso = 1080
 
 # font sizes at various resolutions
 # 1280x720, 1920x1080
-fszs1 = {720: 12, 1080: 20}
-fszs2 = {720: 18, 1080: 30}
-fszs3 = {720: 15, 1080: 25}
-fszs4 = {720: 9, 1080: 15}
-
-makemovie = True
+fszs1 = {1080: 28}
+fszs2 = {1080: 42}
+fszs3 = {1080: 35}
+fszs4 = {1080: 21}
 
 # background color
 bkcol = 'black'
@@ -55,6 +51,52 @@ bkcol = 'black'
 
 
 
+if len(sys.argv) > 1:
+    makemovie = True
+    sector = int(sys.argv[1])
+    if len(sys.argv) > 2:
+        cam = int(sys.argv[2])
+        ccd = int(sys.argv[3])
+    else:
+        cam = 0
+        ccd = 0
+        
+if cam in np.arange(4) + 1 and ccd not in np.arange(4) + 1:
+    print('Bad CCD')
+    sys.exit(1)
+if cam not in np.arange(4) + 1 and ccd in np.arange(4) + 1:
+    print ('Bad Cam')
+    sys.exit(1)
+if sector < 1:
+    print ('Bad Sector')
+    sys.exit(1)
+if cam not in np.arange(5) or ccd not in np.arange(5):
+    print('Bad Cam or CCD')
+    sys.exit(1)
+if cam == 0 and ccd == 0:
+    odir = 'all'
+else:
+    odir = 'Cam{0}CCD{1}'.format(cam, ccd)
+
+
+if os.path.expanduser('~') == '/Users/ekruse':
+    cd = '/Users/ekruse/Research/tessmovie'
+    dataloc = '/Users/ekruse/Research/tessmovie/ffis/sector{0}'.format(sector)
+    outdir = '/Users/ekruse/Research/tessmovie/movies/sector{0}/{1}'.format(sector, odir)
+    
+elif os.path.expandusers('~') == '/Home/eud/ekruse1':
+    cd = '/data/tessraid/ekruse1/tessmovies'
+    dataloc = '/data/tessraid/data/ffis/sector{0}'.format(sector)
+    outdir = '/data/tessraid/ekruse1/tessmovies/movies/sector{0}/{1}'.format(sector, odir)
+
+fontfile = os.path.join(cd, fontfile)
+
+print(f'Sector {sector}, Cam {cam}, CCD {ccd}')
+
+
+
+
+# XXX: data gaps
 
 
 if not os.path.exists(outdir):
@@ -69,7 +111,14 @@ prop = fm.FontProperties(fname=fontfile)
 
 plt.close('all')
 
-paths = os.path.join(dataloc, '*-s{0:04d}-*ffic.fits'.format(sector))
+if cam == 0 and ccd == 0:
+    cstr = '?-?'
+    single = False
+else:
+    cstr = '{0}-{1}'.format(cam, ccd)
+    single = True
+    
+paths = os.path.join(dataloc, '*-s{0:04d}-{1}-*ffic.fits'.format(sector, cstr))
 files = glob(paths)
 files = np.array(files)
 dates = []
@@ -204,9 +253,9 @@ for ct, idate in enumerate(udates):
             #txt2 = 'Cam {0}; CCD {1}'.format(ff[1].header['camera'], ff[1].header['ccd'])
             #plt.hist(data.flatten(), bins=histbins, label=txt2, alpha=0.3, histtype='step')
             #plt.figure(1)
-            
-    plt.xlim(-0.14,8.14)
-    plt.ylim(-0.05,2.05)
+    if not single:
+        plt.xlim(-0.14,8.14)
+        plt.ylim(-0.05,2.05)
     
     titletxt = plt.text(0.5, 0.99, titlestr, transform=fig.transFigure,
                         ha='center', va='top', color=fontcol, fontproperties=prop, fontsize=fszs2[reso])
@@ -226,7 +275,7 @@ for ct, idate in enumerate(udates):
     
     plt.text(0.002, 0.5, lstr, transform=fig.transFigure,
              ha='left', va='center', multialignment='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
-    plt.text(0.998, 0.5, rstr, transform=fig.transFigure,
+    plt.text(0.999, 0.5, rstr, transform=fig.transFigure,
              ha='right', va='center', multialignment='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
     
     # plot my name
