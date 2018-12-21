@@ -18,6 +18,7 @@ import matplotlib.font_manager as fm
 #cd = os.path.abspath(os.path.dirname(__file__))
 cd = '/data/tessraid/ekruse1/tessmovies'
 
+
 sector = 1
 dataloc = '/data/tessraid/data/ffis/sector1'
 
