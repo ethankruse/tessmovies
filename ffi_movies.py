@@ -15,11 +15,12 @@ import os
 from glob import glob
 from datetime import datetime
 import matplotlib.font_manager as fm
+import matplotlib.ticker as ticker
 import sys
 
 sector = 1
-cam = 3
-ccd = 2
+cam = 4
+ccd = 4
 makemovie = False
 
 cmap = 'viridis'
@@ -28,8 +29,6 @@ cmap = 'viridis'
 
 fontcol = 'white'
 fontfile = 'Avenir-Black.otf'
-
-titlestr = 'TESS: The Movie\nSector {0}'.format(sector)
 
 leftlabel = 'ECLIPTIC'
 rightlabel = 'SOUTH POLE'
@@ -44,6 +43,8 @@ fszs1 = {1080: 28}
 fszs2 = {1080: 42}
 fszs3 = {1080: 35}
 fszs4 = {1080: 21}
+# the size of the 'data downlink gap' text in single chip mode
+fszs5 = {1080: 84}
 
 # background color
 bkcol = 'black'
@@ -84,7 +85,7 @@ if os.path.expanduser('~') == '/Users/ekruse':
     dataloc = '/Users/ekruse/Research/tessmovie/ffis/sector{0}'.format(sector)
     outdir = '/Users/ekruse/Research/tessmovie/movies/sector{0}/{1}'.format(sector, odir)
     
-elif os.path.expandusers('~') == '/Home/eud/ekruse1':
+elif os.path.expanduser('~') == '/Home/eud/ekruse1':
     cd = '/data/tessraid/ekruse1/tessmovies'
     dataloc = '/data/tessraid/data/ffis/sector{0}'.format(sector)
     outdir = '/data/tessraid/ekruse1/tessmovies/movies/sector{0}/{1}'.format(sector, odir)
@@ -93,10 +94,6 @@ fontfile = os.path.join(cd, fontfile)
 
 print(f'Sector {sector}, Cam {cam}, CCD {ccd}')
 
-
-
-
-# XXX: data gaps
 
 
 if not os.path.exists(outdir):
@@ -126,8 +123,22 @@ for ifile in files:
     dates.append(os.path.split(ifile)[1][4:].split('-')[0])
 
 dates = np.array(dates)
+
 udates = np.unique(dates)
 
+dtdates = []
+for idate in udates:
+    dtdates.append(datetime.strptime(idate, '%Y%j%H%M%S'))
+
+delt = np.median(np.diff(dtdates))
+
+gapdates = []
+for ii, idate in enumerate(dtdates[:-1]):
+    while idate + 1.5*delt < dtdates[ii+1]:
+        gapdates.append(datetime.strftime(idate+delt, '%Y%j%H%M%S'))
+        idate += delt
+
+udates = np.unique(np.concatenate((udates, gapdates)))
 
 
 """
@@ -175,18 +186,28 @@ plt.colorbar()
     3 4  7
 """
 
-xlocs = [1, 1, 0, 0, 3, 3, 2, 2, 4, 4, 5, 5, 6, 6, 7, 7]
-ylocs = [0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1]
-flips = [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1]
+xlocs = np.array([1, 1, 0, 0, 3, 3, 2, 2, 4, 4, 5, 5, 6, 6, 7, 7])
+ylocs = np.array([0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1])
+flips = np.array([1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1])
 gap = 0.02
-
+# single chip axis padding
+pad = 0.04
+# padding on the right side of single chips for text
+#srtpad = 0.065
+srtpad = 0.
+# where the single chip plot starts
+#slx = 7/16+pad-srtpad
+slx = 1. - 9/16*(1-2*pad) - srtpad - pad*9/16
 vmin = 70
 vmax = 1001.
 
 
 
+titlestr = 'TESS: The Movie\nSector {0}'.format(sector)
+if cam != 0 and ccd != 0:
+    titlestr += '\nCamera {0}\nCCD {1}'.format(cam, ccd)
+
 for ct, idate in enumerate(udates):
-    
     if not makemovie and ct > 0:
         break
     
@@ -204,7 +225,10 @@ for ct, idate in enumerate(udates):
     
     fig = plt.figure(1, figsize=figsizes[reso], frameon=False)
     # make the plot cover the entire figure with the right background colors
-    ax = fig.add_axes([0.0, 0, 1, 1])
+    if single:
+        ax = fig.add_axes([slx, 0+pad, 9/16*(1-2*pad), 1-2*pad])
+    else:
+        ax = fig.add_axes([0.0, 0, 1, 1])
     ax.axis('off')
     fig.patch.set_facecolor(bkcol)
     ax.patch.set_facecolor(bkcol)
@@ -225,12 +249,16 @@ for ct, idate in enumerate(udates):
             else:
                 extent = (xlocs[ind]+gap, xlocs[ind]+1-gap, ylocs[ind]+gap, ylocs[ind]+1-gap)
     
-            plt.imshow(data.T, norm=colors.LogNorm(vmin=vmin, vmax=vmax), #vmin=vmin, vmax=vmax,
+            cbpl = plt.imshow(data.T, norm=colors.LogNorm(vmin=vmin, vmax=vmax), #vmin=vmin, vmax=vmax,
                        extent=extent, cmap=cmap)
-            plt.plot([extent[0], extent[0]], [extent[2], extent[3]], color='white')
-            plt.plot([extent[1], extent[1]], [extent[2], extent[3]], color='white')
-            plt.plot([extent[0], extent[1]], [extent[2], extent[2]], color='white')
-            plt.plot([extent[0], extent[1]], [extent[3], extent[3]], color='white')
+            if single:
+                lw = 6
+            else:
+                lw = 1
+            plt.plot([extent[0], extent[0]], [extent[2], extent[3]], color='white', lw=lw)
+            plt.plot([extent[1], extent[1]], [extent[2], extent[3]], color='white', lw=lw)
+            plt.plot([extent[0], extent[1]], [extent[2], extent[2]], color='white', lw=lw)
+            plt.plot([extent[0], extent[1]], [extent[3], extent[3]], color='white', lw=lw)
             
             txt = 'Cam {0}\nCCD {1}'.format(ff[1].header['camera'], ff[1].header['ccd'])
             
@@ -240,8 +268,9 @@ for ct, idate in enumerate(udates):
             else:
                 ytxt = 0 - ytxtoff - 0.01
                 va = 'top'
-    
-            plt.text(xlocs[ind] + 0.5, ytxt, txt, ha='center', va=va, color=fontcol, fontproperties=prop, fontsize=fszs4[reso])
+                
+            if not single:
+                plt.text(xlocs[ind] + 0.5, ytxt, txt, ha='center', va=va, color=fontcol, fontproperties=prop, fontsize=fszs4[reso])
     
             tstart = datetime.strptime(ff[0].header['date-obs'].split('.')[0],
                                         '%Y-%m-%dT%H:%M:%S')
@@ -253,15 +282,114 @@ for ct, idate in enumerate(udates):
             #txt2 = 'Cam {0}; CCD {1}'.format(ff[1].header['camera'], ff[1].header['ccd'])
             #plt.hist(data.flatten(), bins=histbins, label=txt2, alpha=0.3, histtype='step')
             #plt.figure(1)
+    if len(use) == 0:
+        tmid = datetime.strptime(idate, '%Y%j%H%M%S') + delt/2
+        if single:
+            plt.plot([extent[0], extent[0]], [extent[2], extent[3]], color='white', lw=lw)
+            plt.plot([extent[1], extent[1]], [extent[2], extent[3]], color='white', lw=lw)
+            plt.plot([extent[0], extent[1]], [extent[2], extent[2]], color='white', lw=lw)
+            plt.plot([extent[0], extent[1]], [extent[3], extent[3]], color='white', lw=lw)
+            plt.text(slx + 9/32*(1-2*pad), 0.5, 'Data\nDownlink\nGap',transform=fig.transFigure,
+                     ha='center', va='center', color=fontcol, fontproperties=prop, fontsize=fszs5[reso])
+        else:
+            plt.text(0.5, 0.5, 'Data\nDownlink\nGap',transform=fig.transFigure,
+                     ha='center', va='center', color=fontcol, fontproperties=prop, fontsize=fszs5[reso])
+            
     if not single:
         plt.xlim(-0.14,8.14)
         plt.ylim(-0.05,2.05)
+    else:
+        if flips[ind]:
+            plt.xlim(extent[1], extent[0])
+            plt.ylim(extent[3], extent[2])
     
-    titletxt = plt.text(0.5, 0.99, titlestr, transform=fig.transFigure,
-                        ha='center', va='top', color=fontcol, fontproperties=prop, fontsize=fszs2[reso])
-    plt.text(0.4, 0.86, tmid.strftime('%d %b %Y %H:%M'), transform=fig.transFigure,
-             ha='left', va='top', color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
+    yshift = 0.1
+    if not single:
+        titletxt = plt.text(0.5, 0.99, titlestr, transform=fig.transFigure,
+                            ha='center', va='top', color=fontcol, fontproperties=prop, fontsize=fszs2[reso])
+        plt.text(0.395, 0.86, tmid.strftime('%d %b %Y %H:%M'), transform=fig.transFigure,
+                 ha='left', va='top', color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
+    else:
+        titletxt = plt.text(slx/2, 0.99-yshift, titlestr, transform=fig.transFigure,
+                            ha='center', va='top', color=fontcol, fontproperties=prop, fontsize=fszs2[reso])
+        plt.text(slx/2-0.105, 0.73-yshift, tmid.strftime('%d %b %Y %H:%M'), transform=fig.transFigure,
+                 ha='left', va='top', color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
     
+    if single:
+        # top neighbor
+        if ylocs[ind] == 0:
+            neighb = np.where((xlocs == xlocs[ind]) & (ylocs == 1))[0][0]
+            ncam = neighb // 4 + 1
+            nccd = (neighb % 4) + 1
+            ntxt = 'Cam {0}     CCD {1}'.format(ncam, nccd)
+            plt.text(slx + 9/32*(1-2*pad), 1-pad/2,ntxt,transform=fig.transFigure,
+                     ha='center', va='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
+            ax.annotate("",
+            xy=(slx + 9/32*(1-2*pad), 1-pad/4), xycoords='figure fraction',
+            xytext=(slx + 9/32*(1-2*pad), 1-pad*3/4), textcoords='figure fraction',
+            arrowprops=dict(arrowstyle="wedge, tail_width=2, shrink_factor=0.5", color=fontcol), annotation_clip=False,
+            ha='center', va='center',
+            color=fontcol)
+            
+        else:
+            # bottom neighbor
+            neighb = np.where((xlocs == xlocs[ind]) & (ylocs == 0))[0][0]
+            ncam = neighb // 4 + 1
+            nccd = (neighb % 4) + 1
+            ntxt = 'Cam {0}     CCD {1}'.format(ncam, nccd)
+            plt.text(slx + 9/32*(1-2*pad), pad/2,ntxt,transform=fig.transFigure,
+                     ha='center', va='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
+            ax.annotate("",
+            xy=(slx + 9/32*(1-2*pad), pad/4), xycoords='figure fraction',
+            xytext=(slx + 9/32*(1-2*pad), pad*3/4), textcoords='figure fraction',
+            arrowprops=dict(arrowstyle="wedge, tail_width=2, shrink_factor=0.5", color=fontcol), annotation_clip=False,
+            ha='center', va='center',
+            color=fontcol)
+        # right neighbor
+        neighb = np.where((xlocs == xlocs[ind] + 1) & (ylocs == ylocs[ind]))[0]
+        if len(neighb) > 0:
+            if len(neighb) > 1:
+                sys.exit(1)
+            neighb = neighb[0]
+            ncam = neighb // 4 + 1
+            nccd = (neighb % 4) + 1
+            ntxt = 'Cam{0}\nCCD{1}'.format(ncam, nccd)
+            ntxtstr = ''
+            for char in ntxt:
+                ntxtstr += char + '\n'
+            ntxtstr = ntxtstr[:-1]
+            plt.text(slx + 9/16*(1-2*pad)+pad/2*9/16, 0.5, ntxtstr, transform=fig.transFigure,
+                     ha='center', va='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso],
+                     multialignment='center')
+            ax.annotate("",
+            xy=(slx + 9/16*(1-2*pad)+pad*3/4*9/16, 0.5), xycoords='figure fraction',
+            xytext=(slx + 9/16*(1-2*pad)+pad/4*9/16, 0.5), textcoords='figure fraction',
+            arrowprops=dict(arrowstyle="wedge, tail_width=2, shrink_factor=0.5", color=fontcol), annotation_clip=False,
+            ha='center', va='center',
+            color=fontcol)
+        # left neighbor
+        neighb = np.where((xlocs == xlocs[ind] - 1) & (ylocs == ylocs[ind]))[0]
+        if len(neighb) > 0:
+            if len(neighb) > 1:
+                sys.exit(1)
+            neighb = neighb[0]
+            ncam = neighb // 4 + 1
+            nccd = (neighb % 4) + 1
+            ntxt = 'Cam{0}\nCCD{1}'.format(ncam, nccd)
+            ntxtstr = ''
+            for char in ntxt:
+                ntxtstr += char + '\n'
+            ntxtstr = ntxtstr[:-1]
+            plt.text(slx - pad/2*9/16, 0.5, ntxtstr, transform=fig.transFigure,
+                     ha='center', va='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso],
+                     multialignment='center')
+            ax.annotate("",
+            xy=(slx - pad*3/4*9/16, 0.5), xycoords='figure fraction',
+            xytext=(slx - pad/4*9/16, 0.5), textcoords='figure fraction',
+            arrowprops=dict(arrowstyle="wedge, tail_width=2, shrink_factor=0.5", color=fontcol), annotation_clip=False,
+            ha='center', va='center',
+            color=fontcol)
+            
     # too lazy to figure out how to do this right
     lstr = ''
     for char in leftlabel:
@@ -273,17 +401,21 @@ for ct, idate in enumerate(udates):
         rstr += char + '\n'
     rstr = rstr[:-1]
     
-    plt.text(0.002, 0.5, lstr, transform=fig.transFigure,
-             ha='left', va='center', multialignment='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
-    plt.text(0.999, 0.5, rstr, transform=fig.transFigure,
-             ha='right', va='center', multialignment='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
+    if not single:
+        plt.text(0.002, 0.5, lstr, transform=fig.transFigure,
+                 ha='left', va='center', multialignment='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
+        plt.text(0.999, 0.5, rstr, transform=fig.transFigure,
+                 ha='right', va='center', multialignment='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
     
     # plot my name
     plt.text(0.01, 0.01, credit, transform=fig.transFigure,
              ha='left', va='bottom', multialignment='left', color=fontcol, fontproperties=prop, fontsize=fszs4[reso])
     
-    ax2 = fig.add_axes([0.35, 0.1, 0.3, 0.05])
-    
+    if not single:
+        ax2 = fig.add_axes([0.35, 0.1, 0.3, 0.05])
+    else:
+        ax2 = fig.add_axes([(slx-0.3)/2, 0.2, 0.3, 0.05])
+        
     ticks = np.arange((vmin//100)*100 + 100, vmax, 100).astype(int)
     ticklabs = []
     for itick in ticks:
@@ -291,16 +423,22 @@ for ct, idate in enumerate(udates):
     for ii in np.arange(1, len(ticklabs)-1):
         ticklabs[ii] = ''
     
-    cbar = plt.colorbar(orientation='horizontal', cax=ax2, extend='both')
+    cbar = plt.colorbar(cbpl, orientation='horizontal', cax=ax2, extend='both')
     cbar.set_label('Calibrated Flux', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
     cbar.outline.set_edgecolor(fontcol)
     cbar.outline.set_linewidth(2)
-    
+    cbar.set_ticks(ticker.LogLocator(), update_ticks=True)
+    # for some reason need to clear the original ticks because I can't figure out a way to 
+    # change or remove them properly.
+    cbar.ax.xaxis.set_ticks([])
+    cbar.ax.xaxis.set_ticks([], minor=True)
     cbar.set_ticks(ticks)
     cbar.set_ticklabels(ticklabs)
     cbar.ax.tick_params(color=fontcol)
     cbar.ax.set_xticklabels(ticklabs, color=fontcol, fontproperties=prop, fontsize=fszs4[reso], horizontalalignment='center')
-    cbar.ax.tick_params(axis='x', color=fontcol, width=2, length=5) # , length=5
+    cbar.ax.tick_params(axis='x', color=fontcol, width=2, length=5, zorder=5) # , length=5
+    # why do these minor ticks keep coming back as little black overlays
+    cbar.ax.xaxis.set_ticks([], minor=True)
     
     outstr = os.path.join(outdir, 'img{0:05d}.png'.format(ct))
     # XXX: figure out what the pixel flux is for stars of various magnitudes?
@@ -308,7 +446,7 @@ for ct, idate in enumerate(udates):
 
     if (ct % 20) == 0:
         print('Image {0} of {1}'.format(ct+1, len(udates)))
-        
+         
     if makemovie:
         plt.close(fig) 
 
