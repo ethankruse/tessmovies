@@ -49,7 +49,8 @@ fszs5 = {1080: 84}
 # background color
 bkcol = 'black'
 
-
+# XXX: size of box isn't consistent in data gap for C1C4
+# XXX: in all FOV data gap, remove the ecliptic & south pole text.
 
 
 if len(sys.argv) > 1:
@@ -302,6 +303,9 @@ for ct, idate in enumerate(udates):
         if flips[ind]:
             plt.xlim(extent[1], extent[0])
             plt.ylim(extent[3], extent[2])
+        else:
+            plt.xlim(extent[0], extent[1])
+            plt.ylim(extent[2], extent[3])
     
     yshift = 0.1
     if not single:
@@ -401,7 +405,7 @@ for ct, idate in enumerate(udates):
         rstr += char + '\n'
     rstr = rstr[:-1]
     
-    if not single:
+    if not single and len(use) > 0:
         plt.text(0.002, 0.5, lstr, transform=fig.transFigure,
                  ha='left', va='center', multialignment='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
         plt.text(0.999, 0.5, rstr, transform=fig.transFigure,
