@@ -57,12 +57,15 @@ bkcol = 'black'
 if len(sys.argv) > 1:
     makemovie = True
     sector = int(sys.argv[1])
-    if len(sys.argv) > 2:
+    assert len(sys.argv) == 3 or len(sys.argv) == 5
+    if len(sys.argv) > 3:
         cam = int(sys.argv[2])
         ccd = int(sys.argv[3])
+        diffs = int(sys.argv[4])
     else:
         cam = 0
         ccd = 0
+        diffs = int(sys.argv[2])
         
 if cam in np.arange(4) + 1 and ccd not in np.arange(4) + 1:
     print('Bad CCD')
