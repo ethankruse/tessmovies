@@ -17,15 +17,19 @@ from datetime import datetime
 import matplotlib.font_manager as fm
 import matplotlib.ticker as ticker
 import sys
+import copy
 
 sector = 1
-cam = 4
-ccd = 4
+cam = 1
+ccd = 1
 makemovie = False
+diffs = True
 
 cmap = 'viridis'
 #cmap = 'plasma'
 #cmap = 'gray'
+diffcmap = 'BrBG'
+diffcmap = 'coolwarm'
 
 fontcol = 'white'
 fontfile = 'Avenir-Black.otf'
@@ -48,9 +52,6 @@ fszs5 = {1080: 84}
 
 # background color
 bkcol = 'black'
-
-# XXX: size of box isn't consistent in data gap for C1C4
-# XXX: in all FOV data gap, remove the ecliptic & south pole text.
 
 
 if len(sys.argv) > 1:
@@ -80,6 +81,8 @@ if cam == 0 and ccd == 0:
 else:
     odir = 'Cam{0}CCD{1}'.format(cam, ccd)
 
+if diffs:
+    odir += 'Diffs'
 
 if os.path.expanduser('~') == '/Users/ekruse':
     cd = '/Users/ekruse/Research/tessmovie'
@@ -202,15 +205,71 @@ slx = 1. - 9/16*(1-2*pad) - srtpad - pad*9/16
 vmin = 70
 vmax = 1001.
 
+if diffs:
+    vmin = -100
+    vmax = 100
+cutout = 20
+
+if diffs:
+    diffcmap = copy.deepcopy(plt.get_cmap(diffcmap))
+    lcut = 0.5 - (-cutout/vmin)/2.
+    rcut = 0.5 + (cutout/vmax)/2
+    
+    for ii in np.arange(len(diffcmap._segmentdata['red'])-1, -1, -1):
+        if diffcmap._segmentdata['red'][ii][0] > lcut and diffcmap._segmentdata['red'][ii][0] < rcut:
+            diffcmap._segmentdata['red'].pop(ii)
+    for ii in np.arange(len(diffcmap._segmentdata['blue'])-1, -1, -1):
+        if diffcmap._segmentdata['blue'][ii][0] > lcut and diffcmap._segmentdata['blue'][ii][0] < rcut:
+            diffcmap._segmentdata['blue'].pop(ii)
+    for ii in np.arange(len(diffcmap._segmentdata['green'])-1, -1, -1):
+        if diffcmap._segmentdata['green'][ii][0] > lcut and diffcmap._segmentdata['green'][ii][0] < rcut:
+            diffcmap._segmentdata['green'].pop(ii)
+    
+    for ii in np.arange(len(diffcmap._segmentdata['red'])):
+        if diffcmap._segmentdata['red'][ii][0] > rcut:
+            break
+    # technically to do this right, need to interpolate a bit
+    diffcmap._segmentdata['red'].insert(ii, (rcut, 0, diffcmap._segmentdata['red'][ii][1]))
+    diffcmap._segmentdata['red'].insert(ii, (lcut, diffcmap._segmentdata['red'][ii-1][2], 0))
+    
+    for ii in np.arange(len(diffcmap._segmentdata['blue'])):
+        if diffcmap._segmentdata['blue'][ii][0] > rcut:
+            break
+    # technically to do this right, need to interpolate a bit
+    diffcmap._segmentdata['blue'].insert(ii, (rcut, 0, diffcmap._segmentdata['blue'][ii][1]))
+    diffcmap._segmentdata['blue'].insert(ii, (lcut, diffcmap._segmentdata['blue'][ii-1][2], 0))
+    
+    for ii in np.arange(len(diffcmap._segmentdata['green'])):
+        if diffcmap._segmentdata['green'][ii][0] > rcut:
+            break
+    # technically to do this right, need to interpolate a bit
+    diffcmap._segmentdata['green'].insert(ii, (rcut, 0, diffcmap._segmentdata['green'][ii][1]))
+    diffcmap._segmentdata['green'].insert(ii, (lcut, diffcmap._segmentdata['green'][ii-1][2], 0))
+    
+    diffcmap = colors.LinearSegmentedColormap('tet', diffcmap._segmentdata)
+    
 
 
-titlestr = 'TESS: The Movie\nSector {0}'.format(sector)
+if diffs:
+    if single:
+        titlestr = 'TESS: The Difference\nImage Movie\nSector {0}'.format(sector)
+    else:
+        titlestr = 'TESS: The Difference Image Movie\nSector {0}'.format(sector)
+else:
+    titlestr = 'TESS: The Movie\nSector {0}'.format(sector)
 if cam != 0 and ccd != 0:
     titlestr += '\nCamera {0}\nCCD {1}'.format(cam, ccd)
 
+
+olddata = [None]*16
+
 for ct, idate in enumerate(udates):
-    if not makemovie and ct > 0:
-        break
+    if diffs:
+        if not makemovie and ct > 1:
+            break
+    else: 
+        if not makemovie and ct > 0:
+            break
     
     use = np.where(dates == idate)[0]
     use = use[np.argsort(files[use])]
@@ -243,15 +302,21 @@ for ct, idate in enumerate(udates):
             
             #wcs = WCS(ff[1].header)
             data = ff[1].data * 1
-            data[data < 0.9*vmin] = 0.9*vmin
+            if not diffs:
+                data[data < 0.9*vmin] = 0.9*vmin
     
             if flips[ind]:
                 extent = (xlocs[ind]+1-gap, xlocs[ind]+gap, ylocs[ind]+1-gap, ylocs[ind]+gap)
             else:
                 extent = (xlocs[ind]+gap, xlocs[ind]+1-gap, ylocs[ind]+gap, ylocs[ind]+1-gap)
     
-            cbpl = plt.imshow(data.T, norm=colors.LogNorm(vmin=vmin, vmax=vmax), #vmin=vmin, vmax=vmax,
-                       extent=extent, cmap=cmap)
+            if diffs:
+                if olddata[ind] is not None:
+                    cbpl = plt.imshow(data.T - olddata[ind].T, vmin=vmin, vmax=vmax, # norm=colors.LogNorm(vmin=vmin, vmax=vmax)
+                                      extent=extent, cmap=diffcmap)
+            else:    
+                cbpl = plt.imshow(data.T, norm=colors.LogNorm(vmin=vmin, vmax=vmax), #vmin=vmin, vmax=vmax,
+                                  extent=extent, cmap=cmap)
             if single:
                 lw = 6
             else:
@@ -283,6 +348,18 @@ for ct, idate in enumerate(udates):
             #txt2 = 'Cam {0}; CCD {1}'.format(ff[1].header['camera'], ff[1].header['ccd'])
             #plt.hist(data.flatten(), bins=histbins, label=txt2, alpha=0.3, histtype='step')
             #plt.figure(1)
+            olddata[ind] = data
+    
+    if len(use) == 0:
+        olddata = [None]*16
+
+    if (ct % 20) == 0:
+        print('Image {0} of {1}'.format(ct+1, len(udates)))
+    
+    if diffs and ct == 0:
+        plt.close(fig)
+        continue
+    
     if len(use) == 0:
         tmid = datetime.strptime(idate, '%Y%j%H%M%S') + delt/2
         if single:
@@ -295,7 +372,7 @@ for ct, idate in enumerate(udates):
         else:
             plt.text(0.5, 0.5, 'Data\nDownlink\nGap',transform=fig.transFigure,
                      ha='center', va='center', color=fontcol, fontproperties=prop, fontsize=fszs5[reso])
-            
+        
     if not single:
         plt.xlim(-0.14,8.14)
         plt.ylim(-0.05,2.05)
@@ -316,8 +393,12 @@ for ct, idate in enumerate(udates):
     else:
         titletxt = plt.text(slx/2, 0.99-yshift, titlestr, transform=fig.transFigure,
                             ha='center', va='top', color=fontcol, fontproperties=prop, fontsize=fszs2[reso])
-        plt.text(slx/2-0.105, 0.73-yshift, tmid.strftime('%d %b %Y %H:%M'), transform=fig.transFigure,
-                 ha='left', va='top', color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
+        if diffs:
+            plt.text(slx/2-0.105, 0.73-yshift-.05, tmid.strftime('%d %b %Y %H:%M'), transform=fig.transFigure,
+                     ha='left', va='top', color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
+        else:
+            plt.text(slx/2-0.105, 0.73-yshift, tmid.strftime('%d %b %Y %H:%M'), transform=fig.transFigure,
+                     ha='left', va='top', color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
     
     if single:
         # top neighbor
@@ -419,16 +500,25 @@ for ct, idate in enumerate(udates):
         ax2 = fig.add_axes([0.35, 0.1, 0.3, 0.05])
     else:
         ax2 = fig.add_axes([(slx-0.3)/2, 0.2, 0.3, 0.05])
-        
-    ticks = np.arange((vmin//100)*100 + 100, vmax, 100).astype(int)
-    ticklabs = []
-    for itick in ticks:
-        ticklabs.append(str(itick))
-    for ii in np.arange(1, len(ticklabs)-1):
-        ticklabs[ii] = ''
+    
+    if diffs:
+        ticks = np.array([vmin, -cutout, cutout, vmax]).astype(int)
+        ticklabs = []
+        for itick in ticks:
+            ticklabs.append(str(itick))
+    else:
+        ticks = np.arange((vmin//100)*100 + 100, vmax, 100).astype(int)
+        ticklabs = []
+        for itick in ticks:
+            ticklabs.append(str(itick))
+        for ii in np.arange(1, len(ticklabs)-1):
+            ticklabs[ii] = ''
     
     cbar = plt.colorbar(cbpl, orientation='horizontal', cax=ax2, extend='both')
-    cbar.set_label('Calibrated Flux', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
+    if diffs:
+        cbar.set_label('Change in Flux', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
+    else:
+        cbar.set_label('Calibrated Flux', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
     cbar.outline.set_edgecolor(fontcol)
     cbar.outline.set_linewidth(2)
     cbar.set_ticks(ticker.LogLocator(), update_ticks=True)
@@ -447,14 +537,14 @@ for ct, idate in enumerate(udates):
     outstr = os.path.join(outdir, 'img{0:05d}.png'.format(ct))
     # XXX: figure out what the pixel flux is for stars of various magnitudes?
     plt.savefig(outstr, facecolor=fig.get_facecolor(), edgecolor='none')
-
-    if (ct % 20) == 0:
-        print('Image {0} of {1}'.format(ct+1, len(udates)))
-         
+        
     if makemovie:
         plt.close(fig) 
+        
 
 #plt.figure(2)
 #plt.legend()
 #plt.ylim(0.5, plt.ylim()[1])
 #plt.yscale('log')
+        
+
