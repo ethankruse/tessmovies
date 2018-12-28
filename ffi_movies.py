@@ -329,6 +329,7 @@ for ct, idate in enumerate(udates):
                     # don't plot all the lines in the full FOV movies in the
                     # frame after a data gap
                     if not single:
+                        olddata[ind] = data
                         continue
             else:    
                 cbpl = plt.imshow(data.T, norm=colors.LogNorm(vmin=vmin, vmax=vmax), #vmin=vmin, vmax=vmax,
