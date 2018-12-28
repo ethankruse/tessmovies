@@ -265,6 +265,10 @@ if cam != 0 and ccd != 0:
 
 
 olddata = [None]*16
+if single:
+    nodiff = 1
+else:
+    nodiff = len(olddata)
 
 for ct, idate in enumerate(udates):
     if diffs:
@@ -360,11 +364,6 @@ for ct, idate in enumerate(udates):
             #plt.hist(data.flatten(), bins=histbins, label=txt2, alpha=0.3, histtype='step')
             #plt.figure(1)
             olddata[ind] = data
-    
-    if single:
-        nodiff = 1
-    else:
-        nodiff = len(olddata)
     
     if len(use) == 0 or nodiffct == nodiff:
         tmid = datetime.strptime(idate, '%Y%j%H%M%S') + delt/2
@@ -504,7 +503,7 @@ for ct, idate in enumerate(udates):
         rstr += char + '\n'
     rstr = rstr[:-1]
     
-    if not single and len(use) > 0:
+    if not single and len(use) > 0 and nodiffct != nodiff:
         plt.text(0.002, 0.5, lstr, transform=fig.transFigure,
                  ha='left', va='center', multialignment='center', color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
         plt.text(0.999, 0.5, rstr, transform=fig.transFigure,
