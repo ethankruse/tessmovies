@@ -53,7 +53,7 @@ fszs5 = {1080: 84}
 # background color
 bkcol = 'black'
 
-
+# XXX: the final frame after a data gap needs to be fixed.
 if len(sys.argv) > 1:
     makemovie = True
     sector = int(sys.argv[1])
@@ -101,7 +101,7 @@ fontfile = os.path.join(cd, fontfile)
 
 print(f'Sector {sector}, Cam {cam}, CCD {ccd}')
 
-
+# XXX: S1 gap image is August 9 04:14
 
 if not os.path.exists(outdir):
     os.mkdir(outdir)
@@ -298,10 +298,17 @@ for ct, idate in enumerate(udates):
     
     ytxtoff = 0.0
     
+    nodiffct = 0
+    
     for ii, iuse in enumerate(use):
         with fits.open(files[iuse]) as ff:
             #print(ff[1].header['camera'], ff[1].header['ccd'], ff[1].header['crval1'], ff[1].header['crval2'])
             ind = (int(ff[1].header['camera'])-1) * 4 + int(ff[1].header['ccd']) - 1
+            tstart = datetime.strptime(ff[0].header['date-obs'].split('.')[0],
+                                        '%Y-%m-%dT%H:%M:%S')
+            tend = datetime.strptime(ff[0].header['date-end'].split('.')[0],
+                                        '%Y-%m-%dT%H:%M:%S')
+            tmid = tstart + (tend - tstart)/2
             
             #wcs = WCS(ff[1].header)
             data = ff[1].data * 1
@@ -317,6 +324,12 @@ for ct, idate in enumerate(udates):
                 if olddata[ind] is not None:
                     cbpl = plt.imshow(data.T - olddata[ind].T, vmin=vmin, vmax=vmax, # norm=colors.LogNorm(vmin=vmin, vmax=vmax)
                                       extent=extent, cmap=diffcmap)
+                else:
+                    nodiffct += 1
+                    # don't plot all the lines in the full FOV movies in the
+                    # frame after a data gap
+                    if not single:
+                        continue
             else:    
                 cbpl = plt.imshow(data.T, norm=colors.LogNorm(vmin=vmin, vmax=vmax), #vmin=vmin, vmax=vmax,
                                   extent=extent, cmap=cmap)
@@ -341,29 +354,18 @@ for ct, idate in enumerate(udates):
             if not single:
                 plt.text(xlocs[ind] + 0.5, ytxt, txt, ha='center', va=va, color=fontcol, fontproperties=prop, fontsize=fszs4[reso])
     
-            tstart = datetime.strptime(ff[0].header['date-obs'].split('.')[0],
-                                        '%Y-%m-%dT%H:%M:%S')
-            tend = datetime.strptime(ff[0].header['date-end'].split('.')[0],
-                                        '%Y-%m-%dT%H:%M:%S')
-            tmid = tstart + (tend - tstart)/2
-            
             #plt.figure(2)
             #txt2 = 'Cam {0}; CCD {1}'.format(ff[1].header['camera'], ff[1].header['ccd'])
             #plt.hist(data.flatten(), bins=histbins, label=txt2, alpha=0.3, histtype='step')
             #plt.figure(1)
             olddata[ind] = data
     
-    if len(use) == 0:
-        olddata = [None]*16
-
-    if (ct % 20) == 0:
-        print('Image {0} of {1}'.format(ct+1, len(udates)))
+    if single:
+        nodiff = 1
+    else:
+        nodiff = len(olddata)
     
-    if diffs and ct == 0:
-        plt.close(fig)
-        continue
-    
-    if len(use) == 0:
+    if len(use) == 0 or nodiffct == nodiff:
         tmid = datetime.strptime(idate, '%Y%j%H%M%S') + delt/2
         if single:
             plt.plot([extent[0], extent[0]], [extent[2], extent[3]], color='white', lw=lw)
@@ -376,6 +378,18 @@ for ct, idate in enumerate(udates):
             plt.text(0.5, 0.5, 'Data\nDownlink\nGap',transform=fig.transFigure,
                      ha='center', va='center', color=fontcol, fontproperties=prop, fontsize=fszs5[reso])
         
+    if len(use) == 0:
+        olddata = [None]*16
+
+    if (ct % 20) == 0:
+        print('Image {0} of {1}'.format(ct+1, len(udates)))
+    
+    # skip the first image of the difference movies
+    if diffs and ct == 0:
+        plt.close(fig)
+        continue
+
+
     if not single:
         plt.xlim(-0.14,8.14)
         plt.ylim(-0.05,2.05)
