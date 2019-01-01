@@ -281,9 +281,8 @@ if diffs:
         diffcmap._segmentdata[icol].insert(ii, (rcut, 0, rin))
         diffcmap._segmentdata[icol].insert(ii, (lcut, lin, 0))
     
-        # create our map
-        diffcmap = colors.LinearSegmentedColormap('mymap',
-                                                  diffcmap._segmentdata)
+    # create our map
+    diffcmap = colors.LinearSegmentedColormap('mymap', diffcmap._segmentdata)
 
 # for storing old images
 if diffs:
