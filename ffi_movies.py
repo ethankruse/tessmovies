@@ -24,8 +24,8 @@ makemovie = False
 
 # color maps used for regular and diff movies. The diff map is modified
 # to have black in the center later on
-cmap = 'viridis'
-diffcmap = 'coolwarm'
+cmapstr = 'viridis'
+diffcmapstr = 'coolwarm'
 
 # which font properties to use
 fontcol = 'white'
@@ -118,18 +118,18 @@ if cam == 0 and ccd == 0:
     odir = 'all'
 else:
     odir = 'cam{0}ccd{1}'.format(cam, ccd)
-    
+
+moviefile = f'sec{sector}' + odir
+
 if diffs:
     odir += '_diff'
+    moviefile += '_diff'
+
+moviefile += '.mp4'
 
 # set up the data locations and output directory
 dataloc = dataloc.format(sector)
 outdir = outdir.format(sector, odir)
-
-if diffs:
-    moviefile = f'sec{sector}cam{cam}ccd{ccd}_diff.mp4'
-else:
-    moviefile = f'sec{sector}cam{cam}ccd{ccd}.mp4'
     
 # create the font we're using
 fontfile = os.path.join(cd, fontfile)
@@ -251,7 +251,7 @@ cutout = 20
 
 # create the difference image color bar with a blackout in the center
 if diffs:
-    diffcmap = copy.deepcopy(plt.get_cmap(diffcmap))
+    diffcmap = copy.deepcopy(plt.get_cmap(diffcmapstr))
     
     # fractional region we need to cut out
     lcut = 0.5 - (-cutout/vmin)/2
@@ -259,24 +259,31 @@ if diffs:
     
     cmcolors = ['red', 'green', 'blue']
     for icol in cmcolors:
+        pops = []
         # chop out the regions of the color map that describe what to do
         # between lcut and rcut
         for ii in np.arange(len(diffcmap._segmentdata[icol])-1, -1, -1):
             if (diffcmap._segmentdata[icol][ii][0] > lcut and 
                     diffcmap._segmentdata[icol][ii][0] < rcut):
-                diffcmap._segmentdata[icol].pop(ii)
+                pops.append(diffcmap._segmentdata[icol].pop(ii))
         # figure out where in the list to input our blackout
         for ii in np.arange(len(diffcmap._segmentdata[icol])):
             if diffcmap._segmentdata[icol][ii][0] > rcut:
                 break
+        # interpolate to figure out what the color is at our exact cut points
+        rin = np.interp(rcut, [pops[0][0], diffcmap._segmentdata[icol][ii][0]],
+                        [pops[0][2], diffcmap._segmentdata[icol][ii][1]])
+        lin = np.interp(lcut, [diffcmap._segmentdata[icol][ii-1][0],
+                               pops[-1][0]],
+                        [diffcmap._segmentdata[icol][ii-1][2], pops[-1][1]])
+        
         # insert our blackout commands into the color map
-        # XXX: technically to do this right, need to interpolate a bit, but this
-        # hack should be fine for now
-        diffcmap._segmentdata[icol].insert(ii, (rcut, 0, diffcmap._segmentdata[icol][ii][1]))
-        diffcmap._segmentdata[icol].insert(ii, (lcut, diffcmap._segmentdata[icol][ii-1][2], 0))
-
-    # create our map
-    diffcmap = colors.LinearSegmentedColormap('mymap', diffcmap._segmentdata)
+        diffcmap._segmentdata[icol].insert(ii, (rcut, 0, rin))
+        diffcmap._segmentdata[icol].insert(ii, (lcut, lin, 0))
+    
+        # create our map
+        diffcmap = colors.LinearSegmentedColormap('mymap',
+                                                  diffcmap._segmentdata)
 
 # for storing old images
 if diffs:
@@ -361,7 +368,7 @@ for ct, idate in enumerate(udates):
             else:
                 cnorm = colors.LogNorm(vmin=vmin, vmax=vmax)
                 cbpl = plt.imshow(data.T, norm=cnorm, #vmin=vmin, vmax=vmax,
-                                  extent=extent, cmap=cmap)
+                                  extent=extent, cmap=cmapstr)
             
             # plot the borders of this chip
             plt.plot([extent[0], extent[0]], [extent[2], extent[3]],
