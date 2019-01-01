@@ -1,6 +1,6 @@
 #!/bin/bash
 # first argument is directory with input/output files (with trailing /)
-# second argument is the name of the output move (without the directory)
+# second argument is the name of the output movie (without the directory)
 # third argument is the frame rate (fps)
 
 # make the mp4 using a particular frame rate.
