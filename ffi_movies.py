@@ -133,6 +133,7 @@ if diffs:
 # allow for a testing directory
 if test:
     odir += '_test'
+    moviefile += '_test'
     
 moviefile += '.mp4'
 
