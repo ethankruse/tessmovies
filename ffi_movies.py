@@ -205,8 +205,6 @@ assert gct == len(gaptexts[sector])
 # final list of dates for the movie, including the data gaps
 udates = np.unique(np.concatenate((udates, gapdates)))
 
-sys.exit(0)
-
 """ 
 Here's how the TESS cameras are laid out, with each chip/CCD labeled in its
 proper location. I have rows and columns numbered in the grid on the top/right.
