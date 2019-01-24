@@ -93,6 +93,10 @@ if len(sys.argv) > 1:
         ccd = 0
         diffs = int(sys.argv[2])
 
+# data gap texts in order for each sector.
+dltxt = 'Data\nDownlink\nGap'
+gaptexts = {1: [dltxt], 2: [dltxt], 3: [dltxt], 4: ['Instrument\nAnomaly', dltxt]}
+
 # =======================
 # end of input parameters
 # =======================
@@ -177,6 +181,10 @@ delt = np.median(np.diff(dtdates))
 
 # fill in any data gaps so our dates are equally spaced
 gapdates = []
+gapstarts = []
+gapends = []
+gct = 0
+
 for ii, idate in enumerate(dtdates[:-1]):
     gapstart = idate + delt
     gapend = None
@@ -186,7 +194,13 @@ for ii, idate in enumerate(dtdates[:-1]):
         gapend = idate
     
     if gapend is not None:
-        print('Gap detected: ', gapstart, gapend)
+        print('Data gap detected: ', gapstart, 'to', gapend)
+        print(f'Will have text: {gaptexts[sector]}')
+        gapstarts.append(gapstart - delt/2)
+        gapends.append(gapend + delt/2)
+        gct += 1
+
+assert gct == len(gaptexts[sector])
 
 # final list of dates for the movie, including the data gaps
 udates = np.unique(np.concatenate((udates, gapdates)))
