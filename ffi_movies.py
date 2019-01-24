@@ -195,7 +195,7 @@ for ii, idate in enumerate(dtdates[:-1]):
     
     if gapend is not None:
         print('Data gap detected: ', gapstart, 'to', gapend)
-        print(f'Will have text: {gaptexts[sector]}')
+        print(f'Will have text: {gaptexts[sector][gct]}')
         gapstarts.append(gapstart - delt/2)
         gapends.append(gapend + delt/2)
         gct += 1
@@ -430,6 +430,19 @@ for ct, idate in enumerate(udates):
         # dates come from the file names which are the start of the exposure.
         # we want the mid time for plotting
         tmid = datetime.strptime(idate, '%Y%j%H%M%S') + delt/2
+        
+        iind = -1
+        gtxt = None
+        # figure out what gap text to add to this
+        for gg in np.arange(len(gapstarts)):
+            if tmid > gapstarts[gg] and tmid < gapends[gg]:
+                iind = gg
+                gtxt = gaptexts[sector][gg]
+                break
+        if iind == -1 or gtxt is None:
+            raise Exception(f'Time {tmid} does not fall in a known data gap.')
+        
+            
         # add the "data gap" text
         if single:
             # continue plotting the chip borders in single chip mode
@@ -441,11 +454,11 @@ for ct, idate in enumerate(udates):
                      color='white', lw=lw)
             plt.plot([extent[0], extent[1]], [extent[3], extent[3]],
                      color='white', lw=lw)
-            plt.text(slx + 9/32*(1-2*pad), 0.5, 'Data\nDownlink\nGap', 
+            plt.text(slx + 9/32*(1-2*pad), 0.5, gtxt, 
                      transform=fig.transFigure, ha='center', va='center',
                      color=fontcol, fontproperties=prop, fontsize=fszs5[reso])
         else:
-            plt.text(0.5, 0.5, 'Data\nDownlink\nGap', ha='center', va='center',
+            plt.text(0.5, 0.5, gtxt, ha='center', va='center',
                      transform=fig.transFigure, color=fontcol,
                      fontproperties=prop, fontsize=fszs5[reso])
     
