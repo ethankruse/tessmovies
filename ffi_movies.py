@@ -21,7 +21,8 @@ diffs = 1
 # whether to make all images for the sector. If False, will stop after 1
 # sample image for debugging and testing
 makemovie = False
-test = True
+# put these images and movies in a separate, labeled 'test' directory
+test = False
 
 # color maps used for regular and diff movies. The diff map is modified
 # to have black in the center later on
@@ -95,7 +96,8 @@ if len(sys.argv) > 1:
 
 # data gap texts in order for each sector.
 dltxt = 'Data\nDownlink\nGap'
-gaptexts = {1: [dltxt], 2: [dltxt], 3: [dltxt], 4: ['Instrument\nAnomaly', dltxt]}
+gaptexts = {1: [dltxt], 2: [dltxt], 3: [dltxt],
+            4: ['Instrument\nAnomaly', dltxt]}
 
 # =======================
 # end of input parameters
