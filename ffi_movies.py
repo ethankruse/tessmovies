@@ -173,12 +173,20 @@ delt = np.median(np.diff(dtdates))
 # fill in any data gaps so our dates are equally spaced
 gapdates = []
 for ii, idate in enumerate(dtdates[:-1]):
+    gapstart = idate + delt
+    gapend = None
     while idate + 1.5*delt < dtdates[ii+1]:
         gapdates.append(datetime.strftime(idate+delt, '%Y%j%H%M%S'))
         idate += delt
+        gapend = idate
+    
+    if gapend is not None:
+        print('Gap detected: ', gapstart, gapend)
+
 # final list of dates for the movie, including the data gaps
 udates = np.unique(np.concatenate((udates, gapdates)))
 
+sys.exit(0)
 """ 
 Here's how the TESS cameras are laid out, with each chip/CCD labeled in its
 proper location. I have rows and columns numbered in the grid on the top/right.
