@@ -21,6 +21,7 @@ diffs = 1
 # whether to make all images for the sector. If False, will stop after 1
 # sample image for debugging and testing
 makemovie = False
+test = True
 
 # color maps used for regular and diff movies. The diff map is modified
 # to have black in the center later on
@@ -125,6 +126,10 @@ if diffs:
     odir += '_diff'
     moviefile += '_diff'
 
+# allow for a testing directory
+if test:
+    odir += '_test'
+    
 moviefile += '.mp4'
 
 # set up the data locations and output directory
@@ -187,6 +192,7 @@ for ii, idate in enumerate(dtdates[:-1]):
 udates = np.unique(np.concatenate((udates, gapdates)))
 
 sys.exit(0)
+
 """ 
 Here's how the TESS cameras are laid out, with each chip/CCD labeled in its
 proper location. I have rows and columns numbered in the grid on the top/right.
