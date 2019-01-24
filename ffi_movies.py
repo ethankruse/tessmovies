@@ -426,6 +426,19 @@ for ct, idate in enumerate(udates):
             if diffs:
                 olddata[ind] = data
     
+    # tell the next iteration we had no previous images here
+    if len(use) == 0 and diffs:
+        olddata = [None]*len(xlocs)
+
+    if (ct % 20) == 0:
+        print(f'Image {ct+1} of {len(udates)}. Sector {sector}, Cam {cam}, CCD {ccd}, Diff {diffs}')
+    
+    # skip the first image of the difference movies now that we've saved its
+    # data for the next stage
+    if diffs and ct == 0:
+        plt.close(fig)
+        continue
+    
     # if we couldn't plot the (difference) image
     if len(use) == 0 or nodiffct == nodiff:
         # dates come from the file names which are the start of the exposure.
@@ -466,19 +479,6 @@ for ct, idate in enumerate(udates):
             plt.text(0.5, 0.5, gtxt, ha='center', va='center',
                      transform=fig.transFigure, color=fontcol,
                      fontproperties=prop, fontsize=fszs5[reso])
-    
-    # tell the next iteration we had no previous images here
-    if len(use) == 0 and diffs:
-        olddata = [None]*len(xlocs)
-
-    if (ct % 20) == 0:
-        print(f'Image {ct+1} of {len(udates)}. Sector {sector}, Cam {cam}, CCD {ccd}, Diff {diffs}')
-    
-    # skip the first image of the difference movies now that we've saved its
-    # data for the next stage
-    if diffs and ct == 0:
-        plt.close(fig)
-        continue
 
     # set proper limits on the plot
     if not single:
