@@ -188,16 +188,19 @@ gct = 0
 for ii, idate in enumerate(dtdates[:-1]):
     gapstart = idate + delt
     gapend = None
-    while idate + 1.5*delt < dtdates[ii+1]:
+    while idate + 1.1*delt < dtdates[ii+1]:
         gapdates.append(datetime.strftime(idate+delt, '%Y%j%H%M%S'))
         idate += delt
         gapend = idate
     
     if gapend is not None:
         print('Data gap detected: ', gapstart, 'to', gapend)
-        print(f'Will have text: {gaptexts[sector][gct]}')
+        print(f'Will have text:\n{gaptexts[sector][gct]}')
         gapstarts.append(gapstart - delt/2)
-        gapends.append(gapend + delt/2)
+        # +0.6 for the middle of exposure that we use in the images to be less.
+        # +1 to allow for cadence after gap in difference images is done
+        # below in the actual comparison
+        gapends.append(gapend + delt*0.6)
         gct += 1
 
 assert gct == len(gaptexts[sector])
@@ -423,23 +426,27 @@ for ct, idate in enumerate(udates):
             if diffs:
                 olddata[ind] = data
     
-    # if we couldn't plot the difference image
+    # if we couldn't plot the (difference) image
     if len(use) == 0 or nodiffct == nodiff:
         # dates come from the file names which are the start of the exposure.
         # we want the mid time for plotting
         tmid = datetime.strptime(idate, '%Y%j%H%M%S') + delt/2
         
+        if diffs:
+            gadd = delt
+        else:
+            gadd = 0 * delt
+            
         iind = -1
         gtxt = None
         # figure out what gap text to add to this
         for gg in np.arange(len(gapstarts)):
-            if tmid > gapstarts[gg] and tmid < gapends[gg]:
+            if tmid > gapstarts[gg] and tmid < gapends[gg] + gadd:
                 iind = gg
                 gtxt = gaptexts[sector][gg]
                 break
         if iind == -1 or gtxt is None:
             raise Exception(f'Time {tmid} does not fall in a known data gap.')
-        
             
         # add the "data gap" text
         if single:
