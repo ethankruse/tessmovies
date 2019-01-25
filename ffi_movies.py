@@ -95,9 +95,17 @@ if len(sys.argv) > 1:
         diffs = int(sys.argv[2])
 
 # data gap texts in order for each sector.
+# S3 the first 4 days had some gaps while they experimented with
+# pointing variations.
+# S4 has a one cadence gap when they replaced the guide 
+# star table.
 dltxt = 'Data\nDownlink\nGap'
-gaptexts = {1: [dltxt], 2: [dltxt], 3: [dltxt],
-            4: ['Instrument\nAnomaly', dltxt]}
+pstxt = 'Pointing\nStability\nExperiments'
+
+gaptexts = {1: [dltxt], 2: [dltxt], 
+            3: [pstxt, pstxt, pstxt, pstxt, dltxt, pstxt, pstxt],
+            4: ['Guide Star\nTable\nReplaced',
+                'Instrument\nAnomaly', dltxt]}
 
 # =======================
 # end of input parameters
@@ -195,7 +203,7 @@ for ii, idate in enumerate(dtdates[:-1]):
         gapdates.append(datetime.strftime(idate+delt, '%Y%j%H%M%S'))
         idate += delt
         gapend = idate
-    
+        
     if gapend is not None:
         print('Data gap detected: ', gapstart, 'to', gapend)
         print(f'Will have text:\n{gaptexts[sector][gct]}')
