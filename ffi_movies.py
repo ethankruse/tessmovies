@@ -105,7 +105,8 @@ pstxt = 'Pointing\nStability\nExperiments'
 gaptexts = {1: [dltxt], 2: [dltxt], 
             3: [pstxt, pstxt, pstxt, pstxt, dltxt, pstxt, pstxt],
             4: ['Guide Star\nTable\nReplaced',
-                'Instrument\nAnomaly', dltxt]}
+                'Instrument\nAnomaly', dltxt],
+            5: [dltxt]}
 
 # =======================
 # end of input parameters
