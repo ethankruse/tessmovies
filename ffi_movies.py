@@ -14,10 +14,10 @@ import matplotlib.ticker as ticker
 # parameters for testing in ipython. These are overwritten if run from
 # the command line with proper arguments (see below)
 # options are Sector Diff(1 or 0), or else Sector Cam CCD Diff(1 or 0)
-sector = 1
-cam = 1
-ccd = 1
-diffs = 1
+sector = 6
+cam = 0
+ccd = 0
+diffs = 0
 # whether to make all images for the sector. If False, will stop after 1
 # sample image for debugging and testing
 makemovie = False
@@ -106,7 +106,7 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             3: [pstxt, pstxt, pstxt, pstxt, dltxt, pstxt, pstxt],
             4: ['Guide Star\nTable\nReplaced',
                 'Instrument\nAnomaly', dltxt],
-            5: [dltxt]}
+            5: [dltxt], 6: [dltxt]}
 
 # =======================
 # end of input parameters
@@ -378,6 +378,12 @@ for ct, idate in enumerate(udates):
                                         '%Y-%m-%dT%H:%M:%S')
             tmid = tstart + (tend - tstart)/2
             
+            cadence = None
+            try:
+                cadence = ff[0].header['ffiindex']
+            except KeyError:
+                cadence = None
+
             data = ff[1].data * 1
             # clip out negative fluxes so the log color bar works
             if not diffs:
