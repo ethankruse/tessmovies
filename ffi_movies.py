@@ -106,7 +106,7 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             3: [pstxt, pstxt, pstxt, pstxt, dltxt, pstxt, pstxt],
             4: ['Guide Star\nTable\nReplaced',
                 'Instrument\nAnomaly', dltxt],
-            5: [dltxt], 6: [dltxt]}
+            5: [dltxt], 6: [dltxt], 7: [dltxt]}
 
 # =======================
 # end of input parameters
@@ -518,8 +518,13 @@ for ct, idate in enumerate(udates):
         plt.text(0.5, 0.92, sectorstr, transform=fig.transFigure, ha='center',
                  va='top', color=fontcol, fontproperties=prop, 
                  fontsize=fszs6[reso])
-        plt.text(0.384, 0.855, tmid.strftime('%d %b %Y %H:%M'), 
-                 transform=fig.transFigure, ha='left', va='top', color=fontcol,
+        tstr = tmid.strftime('%d %b %Y %H:%M')
+        plt.text(0.5, 0.855, tstr, 
+                 transform=fig.transFigure, ha='center', va='top', color=fontcol,
+                 fontproperties=prop, fontsize=fszs3[reso])
+        if cadence is not None:
+            plt.text(0.995, 0.005, 'Cadence {0:d}'.format(cadence),
+                     transform=fig.transFigure, ha='right', va='bottom', color=fontcol,
                  fontproperties=prop, fontsize=fszs3[reso])
     else:
         # percentage down the plot to put the title text
@@ -527,20 +532,23 @@ for ct, idate in enumerate(udates):
         plt.text(slx/2, 0.99-yshift, titlestr, transform=fig.transFigure,
                  ha='center', va='top', color=fontcol, fontproperties=prop,
                  fontsize=fszs2[reso])
+        tstr = tmid.strftime('%d %b %Y %H:%M')
+        if cadence is not None:
+            tstr += '\nCadence {0:d}'.format(cadence)
         if diffs:
             plt.text(slx/2, 0.80-yshift, sectorstr, transform=fig.transFigure,
                  ha='center', va='top', color=fontcol, fontproperties=prop,
                  fontsize=fszs6[reso])
-            plt.text(slx/2-0.117, 0.58-yshift, 
-                     tmid.strftime('%d %b %Y %H:%M'), color=fontcol,
+            plt.text(slx/2, 0.58-yshift, 
+                     tstr, color=fontcol,
                      transform=fig.transFigure, fontproperties=prop,
-                     ha='left', va='top', fontsize=fszs3[reso])
+                     ha='center', va='top', fontsize=fszs3[reso])
         else:
             plt.text(slx/2, 0.877-yshift, sectorstr, transform=fig.transFigure,
                  ha='center', va='top', color=fontcol, fontproperties=prop,
                  fontsize=fszs6[reso])
-            plt.text(slx/2-0.117, 0.657-yshift, tmid.strftime('%d %b %Y %H:%M'),
-                     transform=fig.transFigure, ha='left', va='top', 
+            plt.text(slx/2, 0.657-yshift, tstr,
+                     transform=fig.transFigure, ha='center', va='top', 
                      color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
     
     # label the neighboring chips in single CCD mode
