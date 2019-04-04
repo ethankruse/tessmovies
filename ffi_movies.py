@@ -523,8 +523,8 @@ for ct, idate in enumerate(udates):
                  transform=fig.transFigure, ha='center', va='top', color=fontcol,
                  fontproperties=prop, fontsize=fszs3[reso])
         if cadence is not None:
-            plt.text(0.995, 0.005, 'Cadence {0:d}'.format(cadence),
-                     transform=fig.transFigure, ha='right', va='bottom', color=fontcol,
+            plt.text(0.793, 0.005, 'Cadence {0:d}'.format(cadence),
+                     transform=fig.transFigure, ha='left', va='bottom', color=fontcol,
                  fontproperties=prop, fontsize=fszs3[reso])
     else:
         # percentage down the plot to put the title text
