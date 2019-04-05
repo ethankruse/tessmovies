@@ -193,6 +193,7 @@ delt = np.median(np.diff(dtdates))
 
 # fill in any data gaps so our dates are equally spaced
 gapdates = []
+gapcads = []
 gapstarts = []
 gapends = []
 gct = 0
@@ -200,9 +201,12 @@ gct = 0
 for ii, idate in enumerate(dtdates[:-1]):
     gapstart = idate + delt
     gapend = None
+    icad = ii*1
     while idate + 1.1*delt < dtdates[ii+1]:
         gapdates.append(datetime.strftime(idate+delt, '%Y%j%H%M%S'))
+        gapcads.append(icad+1)
         idate += delt
+        icad += 1
         gapend = idate
         
     if gapend is not None:
@@ -338,6 +342,7 @@ else:
 
 plt.close('all')
 
+startcad = None
 # go through every date and create the images
 for ct, idate in enumerate(udates):
     # if we're debugging in ipython, break things off
@@ -383,6 +388,9 @@ for ct, idate in enumerate(udates):
                 cadence = ff[0].header['ffiindex']
             except KeyError:
                 cadence = None
+            
+            if ct == 0:
+                startcad = cadence
 
             data = ff[1].data * 1
             # clip out negative fluxes so the log color bar works
@@ -462,7 +470,10 @@ for ct, idate in enumerate(udates):
         # dates come from the file names which are the start of the exposure.
         # we want the mid time for plotting
         tmid = datetime.strptime(idate, '%Y%j%H%M%S') + delt/2
-        
+        # get the cadence number in the gap right
+        if startcad is not None:
+            cadence = startcad + gapcads[gapdates.index(idate)]
+
         if diffs:
             gadd = delt
         else:
