@@ -106,7 +106,8 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             3: [pstxt, pstxt, pstxt, pstxt, dltxt, pstxt, pstxt],
             4: ['Guide Star\nTable\nReplaced',
                 'Instrument\nAnomaly', dltxt],
-            5: [dltxt], 6: [dltxt], 7: [dltxt]}
+            5: [dltxt], 6: [dltxt], 7: [dltxt],
+            8: [dltxt, 'Instrument\nAnomaly']}
 
 # =======================
 # end of input parameters
