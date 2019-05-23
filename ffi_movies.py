@@ -11,23 +11,24 @@ import matplotlib.colors as colors
 import matplotlib.font_manager as fm
 import matplotlib.ticker as ticker
 
+import astropy.wcs as wcs
+from astropy.coordinates import SkyCoord
+
 # parameters for testing in ipython. These are overwritten if run from
 # the command line with proper arguments (see below)
 # options are Sector Diff(1 or 0), or else Sector Cam CCD Diff(1 or 0)
-sector = 6
-cam = 0
-ccd = 0
+sector = 7
+cam = 4
+ccd = 1
 diffs = 0
+obj = '2MASX J07001137-6602251'
+rad = 4
+
 # whether to make all images for the sector. If False, will stop after 1
 # sample image for debugging and testing
 makemovie = False
 # put these images and movies in a separate, labeled 'test' directory
 test = False
-
-# color maps used for regular and diff movies. The diff map is modified
-# to have black in the center later on
-cmapstr = 'viridis'
-diffcmapstr = 'coolwarm'
 
 # which font properties to use
 fontcol = 'white'
@@ -76,6 +77,10 @@ elif os.path.expanduser('~') == '/Home/eud/ekruse1':
     cd = '/data/tessraid/ekruse1/tessmovies'
     dataloc = '/data/tessraid/data/ffis/sector{0}'
     outdir = '/data/tessraid/ekruse1/tessmovies/movies/sector{0}/{1}'
+elif os.path.expanduser('~') == '/Users/ekruse1':
+    cd = '/Users/ekruse1/tesseract/tessraid/ekruse1/tessmovies'
+    dataloc = '/Users/ekruse1/tesseract/tessraid/data/ffis/sector{0}'
+    outdir = '/Users/ekruse1/tesseract/tessraid/ekruse1/tessmovies/movies/sector{0}/{1}'
 else:
     raise Exception('Need to set data and output paths for this computer.')
 moviescript = os.path.join(cd, 'make_movie.sh')
@@ -84,15 +89,30 @@ moviescript = os.path.join(cd, 'make_movie.sh')
 if len(sys.argv) > 1:
     makemovie = True
     sector = int(sys.argv[1])
-    assert len(sys.argv) == 3 or len(sys.argv) == 5
-    if len(sys.argv) > 3:
-        cam = int(sys.argv[2])
-        ccd = int(sys.argv[3])
-        diffs = int(sys.argv[4])
+    assert len(sys.argv) == 5 or len(sys.argv) == 7
+    cam = int(sys.argv[2])
+    ccd = int(sys.argv[3])
+    diffs = int(sys.argv[4])
+    if len(sys.argv) > 5:
+        obj = sys.argv[5]
+        rad = int(sys.argv[6])
     else:
-        cam = 0
-        ccd = 0
-        diffs = int(sys.argv[2])
+        obj = None
+        rad = None
+
+# color maps used for regular and diff movies. The diff map is modified
+# to have black in the center later on
+if obj is None:
+    cmapstr = 'viridis'
+else:
+    cmapstr = 'gray'
+diffcmapstr = 'coolwarm'
+
+if obj is not None:
+    skyco = SkyCoord.from_name(obj)
+    coords = np.array([[skyco.ra.to_value(), skyco.dec.to_value()]])
+else:
+    coords = None
 
 # data gap texts in order for each sector.
 # S3 the first 4 days had some gaps while they experimented with
@@ -107,7 +127,7 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             4: ['Guide Star\nTable\nReplaced',
                 'Instrument\nAnomaly', dltxt],
             5: [dltxt], 6: [dltxt], 7: [dltxt],
-            8: [dltxt, 'Instrument\nAnomaly']}
+            8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt]}
 
 # =======================
 # end of input parameters
@@ -151,7 +171,10 @@ moviefile += '.mp4'
 
 # set up the data locations and output directory
 dataloc = dataloc.format(sector)
-outdir = outdir.format(sector, odir)
+if obj is not None:
+    outdir = outdir.format(sector, obj)
+else:
+    outdir = outdir.format(sector, odir)
     
 # create the font we're using
 fontfile = os.path.join(cd, fontfile)
@@ -389,14 +412,32 @@ for ct, idate in enumerate(udates):
                 cadence = ff[0].header['ffiindex']
             except KeyError:
                 cadence = None
-            
-            if ct == 0:
-                startcad = cadence
-
+                
             data = ff[1].data * 1
             # clip out negative fluxes so the log color bar works
             if not diffs:
                 data[data < 0.9*vmin] = 0.9*vmin
+            
+            if ct == 0:
+                startcad = cadence
+                
+                if coords is not None:
+                    dwcs = wcs.WCS(ff[1])
+                    loc = dwcs.all_world2pix(coords, 0)
+                    loc = np.round(loc).astype(int)
+                    loc = loc[0]
+                    
+                    if (loc[0] < 0 or loc[0] >= data.shape[0] or loc[1] < 0 or
+                            loc[1] >= data.shape[1]):
+                        raise Exception(f'Object {obj} not in Cam {cam} CCD {ccd}')
+                    xmin = max(0, loc[0] - rad)
+                    xmax = min(data.shape[0], loc[0] + rad + 1)
+                    ymin = max(0, loc[1] - rad)
+                    ymax = min(data.shape[1], loc[1] + rad + 1)
+            
+            if obj is not None:
+                data = data[xmin:xmax, ymin:ymax]
+                    
     
             # the bounds of this chip
             if flips[ind]:
@@ -724,7 +765,9 @@ for ct, idate in enumerate(udates):
 
 # create the movie
 if makemovie:
+    import shlex
     if os.path.exists(os.path.join(outdir, moviefile)):
         os.remove(os.path.join(outdir, moviefile))
-    command = moviescript + f' {outdir}/ {moviefile} {fps}'
+    command = moviescript + f' {shlex.quote(outdir+"/")} {moviefile} {fps}'
     subprocess.check_call(command, shell=True)
+

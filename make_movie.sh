@@ -4,4 +4,4 @@
 # third argument is the frame rate (fps)
 
 # make the mp4 using a particular frame rate.
-ffmpeg -framerate $3 -i $1img%05d.png -c:v libx264 -crf 18 $1$2
+ffmpeg -framerate $3 -i "$1img%05d.png" -c:v libx264 -crf 18 "$1$2"
