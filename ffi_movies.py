@@ -17,12 +17,12 @@ from astropy.coordinates import SkyCoord
 # parameters for testing in ipython. These are overwritten if run from
 # the command line with proper arguments (see below)
 # options are Sector Diff(1 or 0), or else Sector Cam CCD Diff(1 or 0)
-sector = 7
+sector = 8
 cam = 4
 ccd = 1
 diffs = 0
 obj = '2MASX J07001137-6602251'
-rad = 4
+rad = 10
 
 # whether to make all images for the sector. If False, will stop after 1
 # sample image for debugging and testing
@@ -128,6 +128,15 @@ gaptexts = {1: [dltxt], 2: [dltxt],
                 'Instrument\nAnomaly', dltxt],
             5: [dltxt], 6: [dltxt], 7: [dltxt],
             8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt]}
+
+# minimum and maximum flux for the regular movies
+vmin = 70
+vmax = 1001.
+# minimum and maximum flux for the difference image movies
+if diffs:
+    vmin = -100
+    vmax = 100
+
 
 # =======================
 # end of input parameters
@@ -306,14 +315,6 @@ if cam != 0 and ccd != 0:
     sectorstr = 'Sector {0}\nCamera {1}\nCCD {2}'.format(sector, cam, ccd)
 else:
     sectorstr = 'Sector {0}'.format(sector)
-    
-# minimum and maximum flux for the regular movies
-vmin = 70
-vmax = 1001.
-# minimum and maximum flux for the difference image movies
-if diffs:
-    vmin = -100
-    vmax = 100
 
 # absoluate value of fluxes that are blacked out in the difference color bar.
 cutout = 20
@@ -426,6 +427,8 @@ for ct, idate in enumerate(udates):
                     loc = dwcs.all_world2pix(coords, 0)
                     loc = np.round(loc).astype(int)
                     loc = loc[0]
+                    # because FITS and numpy flip axes
+                    loc = loc[::-1]
                     
                     if (loc[0] < 0 or loc[0] >= data.shape[0] or loc[1] < 0 or
                             loc[1] >= data.shape[1]):
