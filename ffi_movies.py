@@ -127,7 +127,8 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             4: ['Guide Star\nTable\nReplaced',
                 'Instrument\nAnomaly', dltxt],
             5: [dltxt], 6: [dltxt], 7: [dltxt],
-            8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt]}
+            8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt],
+            10: [dltxt]}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
