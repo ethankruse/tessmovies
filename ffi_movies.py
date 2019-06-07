@@ -17,11 +17,12 @@ from astropy.coordinates import SkyCoord
 # parameters for testing in ipython. These are overwritten if run from
 # the command line with proper arguments (see below)
 # options are Sector Diff(1 or 0), or else Sector Cam CCD Diff(1 or 0)
-sector = 8
-cam = 4
-ccd = 1
+sector = 10
+cam = 0
+ccd = 0
 diffs = 0
-obj = '2MASX J07001137-6602251'
+#obj = '2MASX J07001137-6602251'
+obj = None
 rad = 10
 
 # whether to make all images for the sector. If False, will stop after 1
@@ -762,7 +763,7 @@ for ct, idate in enumerate(udates):
     
     # save the output image and then close it to save memory
     outstr = os.path.join(outdir, 'img{0:05d}.png'.format(ct))
-    plt.savefig(outstr, facecolor=fig.get_facecolor(), edgecolor='none')
+    fig.savefig(outstr, facecolor=fig.get_facecolor(), edgecolor='none')
         
     if makemovie:
         plt.close(fig) 
