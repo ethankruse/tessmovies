@@ -129,7 +129,7 @@ gaptexts = {1: [dltxt], 2: [dltxt],
                 'Instrument\nAnomaly', dltxt],
             5: [dltxt], 6: [dltxt], 7: [dltxt],
             8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt],
-            10: [dltxt], 11: [dltxt], 12:[dltxt]}
+            10: [dltxt], 11: [dltxt], 12:[dltxt], 13:[dltxt]}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
@@ -384,7 +384,7 @@ for ct, idate in enumerate(udates):
     use = np.where(dates == idate)[0]
     use = use[np.argsort(files[use])]
     
-    fig = plt.figure(1, figsize=figsizes[reso], frameon=False)
+    fig = plt.figure(1, figsize=figsizes[reso])
     # put the axis in the correct spot with the right background colors
     if single:
         ax = fig.add_axes([slx, 0+pad, 9/16*(1-2*pad), 1-2*pad])
