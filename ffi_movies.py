@@ -34,12 +34,7 @@ test = False
 # which font properties to use
 fontcol = 'white'
 fontfile = 'Avenir-Black.otf'
-
-# in the full FOV plots, what text is on the left and right ends
-# ie where is camera 1 and camera 4 pointing
-leftlabel = 'ECLIPTIC'
-rightlabel = 'SOUTH POLE'
-
+    
 # credits to put in the lower left corner
 credit = 'By Ethan Kruse\n@ethan_kruse'
 
@@ -101,6 +96,14 @@ if len(sys.argv) > 1:
         obj = None
         rad = None
 
+# in the full FOV plots, what text is on the left and right ends
+# ie where is camera 1 and camera 4 pointing
+leftlabel = 'ECLIPTIC'
+if sector <= 13:
+    rightlabel = 'SOUTH POLE'
+else:
+    rightlabel = 'NORTH POLE'
+    
 # color maps used for regular and diff movies. The diff map is modified
 # to have black in the center later on
 if obj is None:
@@ -129,7 +132,8 @@ gaptexts = {1: [dltxt], 2: [dltxt],
                 'Instrument\nAnomaly', dltxt],
             5: [dltxt], 6: [dltxt], 7: [dltxt],
             8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt],
-            10: [dltxt], 11: [dltxt], 12:[dltxt], 13:[dltxt]}
+            10: [dltxt], 11: [dltxt], 12:[dltxt], 13:[dltxt],
+            14: [dltxt]}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
