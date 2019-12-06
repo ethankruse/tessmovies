@@ -509,7 +509,8 @@ for ct, idate in enumerate(udates):
         olddata = [None]*len(xlocs)
 
     if (ct % 20) == 0:
-        print(f'Image {ct+1} of {len(udates)}. Sector {sector}, Cam {cam}, CCD {ccd}, Diff {diffs}')
+        now = datetime.now().strftime("%d.%m.%Y %H:%M:%S") 
+        print(f'{now}: Image {ct+1} of {len(udates)}. Sector {sector}, Cam {cam}, CCD {ccd}, Diff {diffs}')
     
     # skip the first image of the difference movies now that we've saved its
     # data for the next stage
