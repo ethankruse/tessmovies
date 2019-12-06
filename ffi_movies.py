@@ -133,7 +133,8 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             5: [dltxt], 6: [dltxt], 7: [dltxt],
             8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt],
             10: [dltxt], 11: [dltxt], 12:[dltxt], 13:[dltxt],
-            14: [dltxt], 15: [dltxt], 16: [dltxt], 17: [dltxt]}
+            14: [dltxt], 15: [dltxt], 16: [dltxt], 
+            17: [dltxt, '']}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
