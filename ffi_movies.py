@@ -135,7 +135,8 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             10: [dltxt], 11: [dltxt], 12:[dltxt], 13:[dltxt],
             14: [dltxt], 15: [dltxt], 16: [dltxt], 
             17: [dltxt, ''],
-            18: ["TESS in\nEarth's\nShadow", dltxt]}
+            18: ["TESS in\nEarth's\nShadow", dltxt],
+            19: [dltxt, '']}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
