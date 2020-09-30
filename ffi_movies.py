@@ -17,7 +17,7 @@ from astropy.coordinates import SkyCoord
 # parameters for testing in ipython. These are overwritten if run from
 # the command line with proper arguments (see below)
 # options are Sector Diff(1 or 0), or else Sector Cam CCD Diff(1 or 0)
-sector = 10
+sector = 27
 cam = 0
 ccd = 0
 diffs = 0
@@ -40,8 +40,6 @@ credit = 'By Ethan Kruse\n@ethan_kruse'
 
 # resolution of the output videos
 reso = 1080
-# output movie frame per second
-fps = 20
 
 # font sizes to use at various resolutions
 # 1280x720, 1920x1080
@@ -99,10 +97,16 @@ if len(sys.argv) > 1:
 # in the full FOV plots, what text is on the left and right ends
 # ie where is camera 1 and camera 4 pointing
 leftlabel = 'ECLIPTIC'
-if sector <= 13:
+if sector <= 13 or sector >=27:
     rightlabel = 'SOUTH POLE'
 else:
     rightlabel = 'NORTH POLE'
+    
+# output movie frame per second
+if sector < 27:
+    fps = 20
+else:
+    fps = 60
     
 # color maps used for regular and diff movies. The diff map is modified
 # to have black in the center later on
@@ -137,7 +141,8 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             17: [dltxt, ''],
             18: ["TESS in\nEarth's\nShadow", dltxt],
             19: [dltxt, ''], 20: [dltxt, ''], 21: [dltxt, ''],
-            22: ['', '', dltxt, '']}
+            22: ['', '', dltxt, ''], 23: [dltxt], 24: [dltxt],
+            25: [dltxt], 26: [dltxt], 27: [dltxt]}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
@@ -378,6 +383,7 @@ else:
 plt.close('all')
 
 startcad = None
+startbjd = None
 # go through every date and create the images
 for ct, idate in enumerate(udates):
     # if we're debugging in ipython, break things off
@@ -419,10 +425,13 @@ for ct, idate in enumerate(udates):
             tmid = tstart + (tend - tstart)/2
             
             cadence = None
+            tbjd = None
             try:
                 cadence = ff[0].header['ffiindex']
+                tbjd = ff[0].header['tstart'] + (ff[0].header['tstop'] - ff[0].header['tstart'])/2
             except KeyError:
                 cadence = None
+                tbjd = None
                 
             data = ff[1].data * 1
             # clip out negative fluxes so the log color bar works
@@ -431,7 +440,7 @@ for ct, idate in enumerate(udates):
             
             if ct == 0:
                 startcad = cadence
-                
+                startbjd = tbjd
                 if coords is not None:
                     dwcs = wcs.WCS(ff[1])
                     loc = dwcs.all_world2pix(coords, 0)
@@ -529,6 +538,7 @@ for ct, idate in enumerate(udates):
         # get the cadence number in the gap right
         if startcad is not None:
             cadence = startcad + gapcads[gapdates.index(idate)]
+            tbjd = startbjd + gapcads[gapdates.index(idate)] * delt.total_seconds() / (24*60*60)
 
         if diffs:
             gadd = delt
@@ -590,8 +600,8 @@ for ct, idate in enumerate(udates):
                  transform=fig.transFigure, ha='center', va='top', color=fontcol,
                  fontproperties=prop, fontsize=fszs3[reso])
         if cadence is not None:
-            plt.text(0.793, 0.005, 'Cadence {0:d}'.format(cadence),
-                     transform=fig.transFigure, ha='left', va='bottom', color=fontcol,
+            plt.text(0.992, 0.005, 'TBJD {0:.3f}\nCadence {1:d}'.format(tbjd, cadence),
+                     transform=fig.transFigure, ha='right', va='bottom', color=fontcol,
                  fontproperties=prop, fontsize=fszs3[reso])
     else:
         # percentage down the plot to put the title text
@@ -769,6 +779,10 @@ for ct, idate in enumerate(udates):
     cbar.ax.tick_params(axis='x', color=fontcol, width=3, length=6, zorder=5)
     # why do these minor ticks keep coming back as little black overlays
     cbar.ax.xaxis.set_ticks([], minor=True)
+    # for some reason need to set each label's parameters individually now?
+    for icbl in cbar.ax.get_xticklabels(which='both'):
+        icbl.set_fontproperties(prop)
+        icbl.set_fontsize(fszs4[reso])
     
     # save the output image and then close it to save memory
     outstr = os.path.join(outdir, 'img{0:05d}.png'.format(ct))
