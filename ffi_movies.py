@@ -97,7 +97,7 @@ if len(sys.argv) > 1:
 # in the full FOV plots, what text is on the left and right ends
 # ie where is camera 1 and camera 4 pointing
 leftlabel = 'ECLIPTIC'
-if sector <= 13 or sector >=27:
+if sector <= 13 or (sector >=27 and sector <= 39):
     rightlabel = 'SOUTH POLE'
 else:
     rightlabel = 'NORTH POLE'
@@ -107,7 +107,7 @@ if sector < 27:
     fps = 20
 else:
     fps = 60
-    
+
 # color maps used for regular and diff movies. The diff map is modified
 # to have black in the center later on
 if obj is None:
@@ -142,7 +142,12 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             18: ["TESS in\nEarth's\nShadow", dltxt],
             19: [dltxt, ''], 20: [dltxt, ''], 21: [dltxt, ''],
             22: ['', '', dltxt, ''], 23: [dltxt], 24: [dltxt],
-            25: [dltxt], 26: [dltxt], 27: [dltxt]}
+            25: [dltxt], 26: [dltxt], 27: [dltxt], 28: [dltxt],
+            29: [dltxt], 30: [dltxt], 31: [dltxt], 32: [dltxt],
+            33: [dltxt], 34: [dltxt], 
+            35: ["TESS Passes\nThrough\nEarth's Shadow", dltxt],
+            36: [dltxt], 37: [dltxt], 38: [dltxt], 39: [dltxt],
+            40: [dltxt]}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
@@ -224,6 +229,9 @@ else:
 paths = os.path.join(dataloc, '*-s{0:04d}-{1}-*ffic.fits'.format(sector, cstr))
 files = glob(paths)
 files = np.array(files)
+
+# XXX:
+print('nfiles', len(files))
 
 # what dates do they correspond to
 dates = []
@@ -740,7 +748,7 @@ for ct, idate in enumerate(udates):
         ax2 = fig.add_axes([0.35, 0.1, 0.3, 0.05])
     else:
         ax2 = fig.add_axes([(slx-0.3)/2, 0.2, 0.3, 0.05])
-    
+
     # set up the tick marks we want to label
     if diffs:
         ticks = np.array([vmin, -cutout, cutout, vmax]).astype(int)
@@ -783,7 +791,8 @@ for ct, idate in enumerate(udates):
     for icbl in cbar.ax.get_xticklabels(which='both'):
         icbl.set_fontproperties(prop)
         icbl.set_fontsize(fszs4[reso])
-    
+
+    cbar.ax.patch.set_alpha(0.)    
     # save the output image and then close it to save memory
     outstr = os.path.join(outdir, 'img{0:05d}.png'.format(ct))
     fig.savefig(outstr, facecolor=fig.get_facecolor(), edgecolor='none')
