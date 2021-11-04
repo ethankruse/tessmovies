@@ -99,6 +99,9 @@ if len(sys.argv) > 1:
 leftlabel = 'ECLIPTIC'
 if sector <= 13 or (sector >=27 and sector <= 39):
     rightlabel = 'SOUTH POLE'
+elif sector >= 42 and sector <= 46:
+    rightlabel = 'EAST'
+    leftlabel = 'WEST'
 else:
     rightlabel = 'NORTH POLE'
     
@@ -147,7 +150,7 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             33: [dltxt], 34: [dltxt], 
             35: ["TESS Passes\nThrough\nEarth's Shadow", dltxt],
             36: [dltxt], 37: [dltxt], 38: [dltxt], 39: [dltxt],
-            40: [dltxt]}
+            40: [dltxt], 41: [dltxt], 42: [dltxt]}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
@@ -411,7 +414,7 @@ for ct, idate in enumerate(udates):
     if single:
         ax = fig.add_axes([slx, 0+pad, 9/16*(1-2*pad), 1-2*pad])
     else:
-        ax = fig.add_axes([0, 0, 1, 1])
+        ax = fig.add_axes([0.005, 0, 0.99, 1])
     ax.axis('off')
     fig.patch.set_facecolor(bkcol)
     ax.patch.set_facecolor(bkcol)
@@ -734,7 +737,7 @@ for ct, idate in enumerate(udates):
         plt.text(0.002, 0.5, lstr, transform=fig.transFigure, ha='left', 
                  va='center', multialignment='center', color=fontcol, 
                  fontproperties=prop, fontsize=fszs1[reso])
-        plt.text(0.999, 0.5, rstr, transform=fig.transFigure, ha='right', 
+        plt.text(0.994, 0.5, rstr, transform=fig.transFigure, ha='right', 
                  va='center', multialignment='center', color=fontcol, 
                  fontproperties=prop, fontsize=fszs1[reso])
     
