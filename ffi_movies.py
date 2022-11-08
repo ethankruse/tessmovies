@@ -152,7 +152,10 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             36: [dltxt], 37: [dltxt], 38: [dltxt], 39: [dltxt],
             40: [dltxt], 41: [dltxt], 42: [dltxt], 43: [dltxt],
             44: [dltxt, ''], 45: [dltxt], 46: [dltxt],
-            47: [dltxt]}
+            47: [dltxt], 48: [dltxt], 49: [dltxt], 
+            50: ['Apogee\nDownlink\nTest', dltxt], 51: [dltxt],
+            52: ['', dltxt], 53: [dltxt], 54: [dltxt],
+            55: [dltxt]}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
@@ -779,7 +782,7 @@ for ct, idate in enumerate(udates):
         
     cbar.outline.set_edgecolor(fontcol)
     cbar.outline.set_linewidth(3)
-    cbar.set_ticks(ticker.LogLocator(), update_ticks=True)
+    cbar.set_ticks(ticker.LogLocator())
     # for some reason need to clear the original ticks because I can't figure 
     # out a way to change or remove them properly.
     cbar.ax.xaxis.set_ticks([])
