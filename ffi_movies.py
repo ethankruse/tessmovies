@@ -108,8 +108,10 @@ else:
 # output movie frame per second
 if sector < 27:
     fps = 20
-else:
+elif sector < 56:
     fps = 60
+else:
+    fps = 120
 
 # color maps used for regular and diff movies. The diff map is modified
 # to have black in the center later on
@@ -155,7 +157,7 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             47: [dltxt], 48: [dltxt], 49: [dltxt], 
             50: ['Apogee\nDownlink\nTest', dltxt], 51: [dltxt],
             52: ['', dltxt], 53: [dltxt], 54: [dltxt],
-            55: [dltxt]}
+            55: [dltxt], 56: [dltxt]*3}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
