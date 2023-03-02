@@ -157,7 +157,10 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             47: [dltxt], 48: [dltxt], 49: [dltxt], 
             50: ['Apogee\nDownlink\nTest', dltxt], 51: [dltxt],
             52: ['', dltxt], 53: [dltxt], 54: [dltxt],
-            55: [dltxt], 56: [dltxt]*3}
+            55: [dltxt], 56: [dltxt]*3, 
+            57: [dltxt, 'Safe\nMode', dltxt, dltxt], 
+            58: [dltxt]*3, 59: [dltxt, '', dltxt, dltxt],
+            60: [dltxt, dltxt, 'Safe\nMode', dltxt]}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
