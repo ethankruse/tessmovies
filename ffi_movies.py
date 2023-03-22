@@ -97,7 +97,7 @@ if len(sys.argv) > 1:
 # in the full FOV plots, what text is on the left and right ends
 # ie where is camera 1 and camera 4 pointing
 leftlabel = 'ECLIPTIC'
-if sector <= 13 or (sector >=27 and sector <= 39):
+if sector <= 13 or (sector >=27 and sector <= 39) or (sector >= 61):
     rightlabel = 'SOUTH POLE'
 elif sector >= 42 and sector <= 46:
     rightlabel = 'EAST'
@@ -160,7 +160,8 @@ gaptexts = {1: [dltxt], 2: [dltxt],
             55: [dltxt], 56: [dltxt]*3, 
             57: [dltxt, 'Safe\nMode', dltxt, dltxt], 
             58: [dltxt]*3, 59: [dltxt, '', dltxt, dltxt],
-            60: [dltxt, dltxt, 'Safe\nMode', dltxt]}
+            60: [dltxt, dltxt, 'Safe\nMode', dltxt],
+            61: [dltxt]*3}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
