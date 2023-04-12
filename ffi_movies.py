@@ -1,18 +1,18 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-import os, sys, copy, subprocess
-from glob import glob
+import copy
+import os
+import subprocess
+import sys
 from datetime import datetime
-from astropy.io import fits
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.font_manager as fm
-import matplotlib.ticker as ticker
+from glob import glob
 
 import astropy.wcs as wcs
+import matplotlib.colors as colors
+import matplotlib.font_manager as fm
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import numpy as np
 from astropy.coordinates import SkyCoord
+from astropy.io import fits
 
 # parameters for testing in ipython. These are overwritten if run from
 # the command line with proper arguments (see below)
@@ -21,7 +21,7 @@ sector = 61
 cam = 0
 ccd = 0
 diffs = 0
-#obj = '2MASX J07001137-6602251'
+# obj = '2MASX J07001137-6602251'
 obj = None
 rad = 10
 
@@ -34,7 +34,7 @@ test = False
 # which font properties to use
 fontcol = 'white'
 fontfile = 'Avenir-Black.otf'
-    
+
 # credits to put in the lower left corner
 credit = 'By Ethan Kruse\n@ethan_kruse'
 
@@ -74,7 +74,8 @@ elif os.path.expanduser('~') == '/Home/eud/ekruse1':
 elif os.path.expanduser('~') == '/Users/ekruse1':
     cd = '/Users/ekruse1/tesseract/tessraid/ekruse1/tessmovies'
     dataloc = '/Users/ekruse1/tesseract/tessraid/data/ffis/sector{0}'
-    outdir = '/Users/ekruse1/tesseract/tessraid/ekruse1/tessmovies/movies/sector{0}/{1}'
+    outdir = '/Users/ekruse1/tesseract/tessraid/ekruse1/tessmovies/' \
+             'movies/sector{0}/{1}'
 else:
     raise Exception('Need to set data and output paths for this computer.')
 moviescript = os.path.join(cd, 'make_movie.sh')
@@ -97,14 +98,14 @@ if len(sys.argv) > 1:
 # in the full FOV plots, what text is on the left and right ends
 # ie where is camera 1 and camera 4 pointing
 leftlabel = 'ECLIPTIC'
-if sector <= 13 or (sector >=27 and sector <= 39) or (sector >= 61):
+if sector <= 13 or (27 <= sector <= 39) or (sector >= 61):
     rightlabel = 'SOUTH POLE'
-elif sector >= 42 and sector <= 46:
+elif 42 <= sector <= 46:
     rightlabel = 'EAST'
     leftlabel = 'WEST'
 else:
     rightlabel = 'NORTH POLE'
-    
+
 # output movie frame per second
 if sector < 27:
     fps = 20
@@ -130,38 +131,32 @@ else:
 # data gap texts in order for each sector.
 # S3 the first 4 days had some gaps while they experimented with
 # pointing variations.
-# S4 has a one cadence gap when they replaced the guide 
+# S4 has a one cadence gap when they replaced the guide
 # star table.
 dltxt = 'Data\nDownlink\nGap'
 pstxt = 'Pointing\nStability\nExperiments'
 
-gaptexts = {1: [dltxt], 2: [dltxt], 
+gaptexts = {1: [dltxt], 2: [dltxt],
             3: [pstxt, pstxt, pstxt, pstxt, dltxt, pstxt, pstxt],
-            4: ['Guide Star\nTable\nReplaced',
-                'Instrument\nAnomaly', dltxt],
+            4: ['Guide Star\nTable\nReplaced', 'Instrument\nAnomaly', dltxt],
             5: [dltxt], 6: [dltxt], 7: [dltxt],
-            8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt],
-            10: [dltxt], 11: [dltxt], 12:[dltxt], 13:[dltxt],
-            14: [dltxt], 15: [dltxt], 16: [dltxt], 
-            17: [dltxt, ''],
-            18: ["TESS in\nEarth's\nShadow", dltxt],
-            19: [dltxt, ''], 20: [dltxt, ''], 21: [dltxt, ''],
-            22: ['', '', dltxt, ''], 23: [dltxt], 24: [dltxt],
-            25: [dltxt], 26: [dltxt], 27: [dltxt], 28: [dltxt],
-            29: [dltxt], 30: [dltxt], 31: [dltxt], 32: [dltxt],
-            33: [dltxt], 34: [dltxt], 
+            8: [dltxt, 'Instrument\nAnomaly'], 9: [dltxt], 10: [dltxt],
+            11: [dltxt], 12: [dltxt], 13: [dltxt], 14: [dltxt], 15: [dltxt],
+            16: [dltxt], 17: [dltxt, ''],
+            18: ["TESS in\nEarth's\nShadow", dltxt], 19: [dltxt, ''],
+            20: [dltxt, ''], 21: [dltxt, ''], 22: ['', '', dltxt, ''],
+            23: [dltxt], 24: [dltxt], 25: [dltxt], 26: [dltxt], 27: [dltxt],
+            28: [dltxt], 29: [dltxt], 30: [dltxt], 31: [dltxt], 32: [dltxt],
+            33: [dltxt], 34: [dltxt],
             35: ["TESS Passes\nThrough\nEarth's Shadow", dltxt],
-            36: [dltxt], 37: [dltxt], 38: [dltxt], 39: [dltxt],
-            40: [dltxt], 41: [dltxt], 42: [dltxt], 43: [dltxt],
-            44: [dltxt, ''], 45: [dltxt], 46: [dltxt],
-            47: [dltxt], 48: [dltxt], 49: [dltxt], 
-            50: ['Apogee\nDownlink\nTest', dltxt], 51: [dltxt],
-            52: ['', dltxt], 53: [dltxt], 54: [dltxt],
-            55: [dltxt], 56: [dltxt]*3, 
-            57: [dltxt, 'Safe\nMode', dltxt, dltxt], 
-            58: [dltxt]*3, 59: [dltxt, '', dltxt, dltxt],
-            60: [dltxt, dltxt, 'Safe\nMode', dltxt],
-            61: [dltxt]*3}
+            36: [dltxt], 37: [dltxt], 38: [dltxt], 39: [dltxt], 40: [dltxt],
+            41: [dltxt], 42: [dltxt], 43: [dltxt], 44: [dltxt, ''], 45: [dltxt],
+            46: [dltxt], 47: [dltxt], 48: [dltxt], 49: [dltxt],
+            50: ['Apogee\nDownlink\nTest', dltxt], 51: [dltxt], 52: ['', dltxt],
+            53: [dltxt], 54: [dltxt], 55: [dltxt], 56: [dltxt]*3,
+            57: [dltxt, 'Safe\nMode', dltxt, dltxt], 58: [dltxt]*3,
+            59: [dltxt, '', dltxt, dltxt],
+            60: [dltxt, dltxt, 'Safe\nMode', dltxt], 61: [dltxt]*3}
 
 # minimum and maximum flux for the regular movies
 vmin = 70
@@ -178,7 +173,7 @@ if diffs:
 
 # make sure the camera and CCD combination is valid for TESS
 if sector < 1:
-    print ('Bad Sector')
+    print('Bad Sector')
     sys.exit(1)
 if cam not in np.arange(5) or ccd not in np.arange(5):
     print('Bad Cam or CCD')
@@ -188,7 +183,7 @@ if cam in np.arange(4) + 1 and ccd not in np.arange(4) + 1:
     print('Bad CCD')
     sys.exit(1)
 if cam not in np.arange(4) + 1 and ccd in np.arange(4) + 1:
-    print ('Bad Cam')
+    print('Bad Cam')
     sys.exit(1)
 
 print(f'Sector {sector}, Cam {cam}, CCD {ccd}, Diff {diffs}')
@@ -209,7 +204,7 @@ if diffs:
 if test:
     odir += '_test'
     moviefile += '_test'
-    
+
 moviefile += '.mp4'
 
 # set up the data locations and output directory
@@ -218,7 +213,7 @@ if obj is not None:
     outdir = outdir.format(sector, obj)
 else:
     outdir = outdir.format(sector, odir)
-    
+
 # create the font we're using
 fontfile = os.path.join(cd, fontfile)
 prop = fm.FontProperties(fname=fontfile)
@@ -244,7 +239,6 @@ paths = os.path.join(dataloc, '*-s{0:04d}-{1}-*ffic.fits'.format(sector, cstr))
 files = glob(paths)
 files = np.array(files)
 
-# XXX:
 print('nfiles', len(files))
 
 # what dates do they correspond to
@@ -263,7 +257,6 @@ delt = np.median(np.diff(dtdates))
 
 # fill in any data gaps so our dates are equally spaced
 gapdates = []
-gapcads = []
 gapstarts = []
 gapends = []
 gct = 0
@@ -274,11 +267,10 @@ for ii, idate in enumerate(dtdates[:-1]):
     icad = ii*1
     while idate + 1.1*delt < dtdates[ii+1]:
         gapdates.append(datetime.strftime(idate+delt, '%Y%j%H%M%S'))
-        gapcads.append(icad+1)
         idate += delt
         icad += 1
         gapend = idate
-        
+
     if gapend is not None:
         print('Data gap detected: ', gapstart, 'to', gapend)
         print(f'Will have text:\n{gaptexts[sector][gct]}')
@@ -310,7 +302,7 @@ Cam 4:  2 1   6
         3 4   7
 """
 
-# where each chip is located in x and y coordinates. 
+# where each chip is located in x and y coordinates.
 # location is at index (camera # - 1)*4 + (CCD # - 1)
 xlocs = np.array([1, 1, 0, 0, 3, 3, 2, 2, 4, 4, 5, 5, 6, 6, 7, 7])
 ylocs = np.array([0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1])
@@ -359,19 +351,18 @@ cutout = 20
 # create the difference image color bar with a blackout in the center
 if diffs:
     diffcmap = copy.deepcopy(plt.get_cmap(diffcmapstr))
-    
+
     # fractional region we need to cut out
     lcut = 0.5 - (-cutout/vmin)/2
     rcut = 0.5 + (cutout/vmax)/2
-    
+
     cmcolors = ['red', 'green', 'blue']
     for icol in cmcolors:
         pops = []
         # chop out the regions of the color map that describe what to do
         # between lcut and rcut
         for ii in np.arange(len(diffcmap._segmentdata[icol])-1, -1, -1):
-            if (diffcmap._segmentdata[icol][ii][0] > lcut and 
-                    diffcmap._segmentdata[icol][ii][0] < rcut):
+            if lcut < diffcmap._segmentdata[icol][ii][0] < rcut:
                 pops.append(diffcmap._segmentdata[icol].pop(ii))
         # figure out where in the list to input our blackout
         for ii in np.arange(len(diffcmap._segmentdata[icol])):
@@ -383,11 +374,11 @@ if diffs:
         lin = np.interp(lcut, [diffcmap._segmentdata[icol][ii-1][0],
                                pops[-1][0]],
                         [diffcmap._segmentdata[icol][ii-1][2], pops[-1][1]])
-        
+
         # insert our blackout commands into the color map
         diffcmap._segmentdata[icol].insert(ii, (rcut, 0, rin))
         diffcmap._segmentdata[icol].insert(ii, (lcut, lin, 0))
-    
+
     # create our map
     diffcmap = colors.LinearSegmentedColormap('mymap', diffcmap._segmentdata)
 
@@ -404,22 +395,22 @@ else:
 
 plt.close('all')
 
-startcad = None
-startbjd = None
+prevcad = None
+prevbjd = None
 # go through every date and create the images
 for ct, idate in enumerate(udates):
     # if we're debugging in ipython, break things off
     if diffs:
         if not makemovie and ct > 1:
             break
-    else: 
+    else:
         if not makemovie and ct > 0:
             break
-    
+
     # grab the files for this date
     use = np.where(dates == idate)[0]
     use = use[np.argsort(files[use])]
-    
+
     fig = plt.figure(1, figsize=figsizes[reso])
     # put the axis in the correct spot with the right background colors
     if single:
@@ -429,40 +420,41 @@ for ct, idate in enumerate(udates):
     ax.axis('off')
     fig.patch.set_facecolor(bkcol)
     ax.patch.set_facecolor(bkcol)
-    
+
     # how many images don't have a previous image for difference images
     nodiffct = 0
-    
+
     # plot each CCD we want
     for ii, iuse in enumerate(use):
         with fits.open(files[iuse]) as ff:
             # index into the xlocs/ylocs/flips
-            ind = (4 * (int(ff[1].header['camera'])-1) + 
+            ind = (4 * (int(ff[1].header['camera'])-1) +
                    int(ff[1].header['ccd']) - 1)
             # times of the image
             tstart = datetime.strptime(ff[0].header['date-obs'].split('.')[0],
-                                        '%Y-%m-%dT%H:%M:%S')
+                                       '%Y-%m-%dT%H:%M:%S')
             tend = datetime.strptime(ff[0].header['date-end'].split('.')[0],
-                                        '%Y-%m-%dT%H:%M:%S')
+                                     '%Y-%m-%dT%H:%M:%S')
             tmid = tstart + (tend - tstart)/2
-            
+
             cadence = None
             tbjd = None
             try:
                 cadence = ff[0].header['ffiindex']
-                tbjd = ff[0].header['tstart'] + (ff[0].header['tstop'] - ff[0].header['tstart'])/2
+                tbjd = ff[0].header['tstart'] + (ff[0].header['tstop'] -
+                                                 ff[0].header['tstart'])/2
             except KeyError:
                 cadence = None
                 tbjd = None
-                
+
             data = ff[1].data * 1
             # clip out negative fluxes so the log color bar works
             if not diffs:
                 data[data < 0.9*vmin] = 0.9*vmin
-            
+
+            prevcad = cadence
+            prevbjd = tbjd
             if ct == 0:
-                startcad = cadence
-                startbjd = tbjd
                 if coords is not None:
                     dwcs = wcs.WCS(ff[1])
                     loc = dwcs.all_world2pix(coords, 0)
@@ -470,27 +462,27 @@ for ct, idate in enumerate(udates):
                     loc = loc[0]
                     # because FITS and numpy flip axes
                     loc = loc[::-1]
-                    
+
                     if (loc[0] < 0 or loc[0] >= data.shape[0] or loc[1] < 0 or
                             loc[1] >= data.shape[1]):
-                        raise Exception(f'Object {obj} not in Cam {cam} CCD {ccd}')
+                        raise Exception(f'Object {obj} not in Cam {cam} CCD '
+                                        f'{ccd}')
                     xmin = max(0, loc[0] - rad)
                     xmax = min(data.shape[0], loc[0] + rad + 1)
                     ymin = max(0, loc[1] - rad)
                     ymax = min(data.shape[1], loc[1] + rad + 1)
-            
+
             if obj is not None:
                 data = data[xmin:xmax, ymin:ymax]
-                    
-    
+
             # the bounds of this chip
             if flips[ind]:
-                extent = (xlocs[ind]+1-gap, xlocs[ind]+gap, 
+                extent = (xlocs[ind]+1-gap, xlocs[ind]+gap,
                           ylocs[ind]+1-gap, ylocs[ind]+gap)
             else:
-                extent = (xlocs[ind]+gap, xlocs[ind]+1-gap, 
+                extent = (xlocs[ind]+gap, xlocs[ind]+1-gap,
                           ylocs[ind]+gap, ylocs[ind]+1-gap)
-            
+
             # plot the difference image if possible
             if diffs:
                 if olddata[ind] is not None:
@@ -507,9 +499,9 @@ for ct, idate in enumerate(udates):
             # plot the chip
             else:
                 cnorm = colors.LogNorm(vmin=vmin, vmax=vmax)
-                cbpl = plt.imshow(data.T, norm=cnorm, #vmin=vmin, vmax=vmax,
+                cbpl = plt.imshow(data.T, norm=cnorm,  # vmin=vmin, vmax=vmax,
                                   extent=extent, cmap=cmapstr)
-            
+
             # plot the borders of this chip
             plt.plot([extent[0], extent[0]], [extent[2], extent[3]],
                      color='white', lw=lw)
@@ -519,7 +511,7 @@ for ct, idate in enumerate(udates):
                      color='white', lw=lw)
             plt.plot([extent[0], extent[1]], [extent[3], extent[3]],
                      color='white', lw=lw)
-            
+
             # label the chips in the full FOV plots
             txt = 'Cam {0}\nCCD {1}'.format(ff[1].header['camera'],
                                             ff[1].header['ccd'])
@@ -529,7 +521,7 @@ for ct, idate in enumerate(udates):
             else:
                 ytxt = -0.005
                 va = 'top'
-                
+
             if not single:
                 plt.text(xlocs[ind] + 0.5, ytxt, txt, ha='center', va=va,
                          color=fontcol, fontproperties=prop,
@@ -537,47 +529,49 @@ for ct, idate in enumerate(udates):
             # save this chip's data if we're doing difference images
             if diffs:
                 olddata[ind] = data
-    
+
     # tell the next iteration we had no previous images here
     if len(use) == 0 and diffs:
         olddata = [None]*len(xlocs)
 
     if (ct % 20) == 0:
-        now = datetime.now().strftime("%d.%m.%Y %H:%M:%S") 
-        print(f'{now}: Image {ct+1} of {len(udates)}. Sector {sector}, Cam {cam}, CCD {ccd}, Diff {diffs}')
-    
+        now = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        print(f'{now}: Image {ct+1} of {len(udates)}. Sector {sector}, Cam '
+              f'{cam}, CCD {ccd}, Diff {diffs}')
+
     # skip the first image of the difference movies now that we've saved its
     # data for the next stage
     if diffs and ct == 0:
         plt.close(fig)
         continue
-    
+
     # if we couldn't plot the (difference) image
     if len(use) == 0 or nodiffct == nodiff:
         # dates come from the file names which are the start of the exposure.
-        # we want the mid time for plotting
+        # we want the mid-time for plotting
         tmid = datetime.strptime(idate, '%Y%j%H%M%S') + delt/2
         # get the cadence number in the gap right
-        if startcad is not None:
-            cadence = startcad + gapcads[gapdates.index(idate)]
-            tbjd = startbjd + gapcads[gapdates.index(idate)] * delt.total_seconds() / (24*60*60)
+        cadence = prevcad + 1
+        tbjd = prevbjd + delt.total_seconds() / (24*60*60)
+        prevcad = cadence
+        prevbjd = tbjd
 
         if diffs:
             gadd = delt
         else:
             gadd = 0 * delt
-            
+
         iind = -1
         gtxt = None
         # figure out what gap text to add to this
         for gg in np.arange(len(gapstarts)):
-            if tmid > gapstarts[gg] and tmid < gapends[gg] + gadd:
+            if gapstarts[gg] < tmid < gapends[gg] + gadd:
                 iind = gg
                 gtxt = gaptexts[sector][gg]
                 break
         if iind == -1 or gtxt is None:
             raise Exception(f'Time {tmid} does not fall in a known data gap.')
-            
+
         # add the "data gap" text
         if single:
             # continue plotting the chip borders in single chip mode
@@ -589,7 +583,7 @@ for ct, idate in enumerate(udates):
                      color='white', lw=lw)
             plt.plot([extent[0], extent[1]], [extent[3], extent[3]],
                      color='white', lw=lw)
-            plt.text(slx + 9/32*(1-2*pad), 0.5, gtxt, 
+            plt.text(slx + 9/32*(1-2*pad), 0.5, gtxt,
                      transform=fig.transFigure, ha='center', va='center',
                      color=fontcol, fontproperties=prop, fontsize=fszs5[reso])
         else:
@@ -608,23 +602,23 @@ for ct, idate in enumerate(udates):
         else:
             plt.xlim(extent[0], extent[1])
             plt.ylim(extent[2], extent[3])
-    
+
     # add in the title text, sector subtitle, and dates
     if not single:
         plt.text(0.5, 0.995, titlestr, transform=fig.transFigure, ha='center',
-                 va='top', color=fontcol, fontproperties=prop, 
+                 va='top', color=fontcol, fontproperties=prop,
                  fontsize=fszs2[reso])
         plt.text(0.5, 0.92, sectorstr, transform=fig.transFigure, ha='center',
-                 va='top', color=fontcol, fontproperties=prop, 
+                 va='top', color=fontcol, fontproperties=prop,
                  fontsize=fszs6[reso])
         tstr = tmid.strftime('%d %b %Y %H:%M')
-        plt.text(0.5, 0.855, tstr, 
-                 transform=fig.transFigure, ha='center', va='top', color=fontcol,
-                 fontproperties=prop, fontsize=fszs3[reso])
+        plt.text(0.5, 0.855, tstr, transform=fig.transFigure, ha='center',
+                 va='top', color=fontcol, fontproperties=prop,
+                 fontsize=fszs3[reso])
         if cadence is not None:
-            plt.text(0.992, 0.005, 'TBJD {0:.3f}\nCadence {1:d}'.format(tbjd, cadence),
-                     transform=fig.transFigure, ha='right', va='bottom', color=fontcol,
-                 fontproperties=prop, fontsize=fszs3[reso])
+            plt.text(0.992, 0.005, f'TBJD {tbjd:.3f}\nCadence {cadence:d}',
+                     transform=fig.transFigure, ha='right', va='bottom',
+                     color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
     else:
         # percentage down the plot to put the title text
         yshift = 0.05
@@ -636,20 +630,19 @@ for ct, idate in enumerate(udates):
             tstr += '\nCadence {0:d}'.format(cadence)
         if diffs:
             plt.text(slx/2, 0.80-yshift, sectorstr, transform=fig.transFigure,
-                 ha='center', va='top', color=fontcol, fontproperties=prop,
-                 fontsize=fszs6[reso])
-            plt.text(slx/2, 0.58-yshift, 
-                     tstr, color=fontcol,
+                     ha='center', va='top', color=fontcol, fontproperties=prop,
+                     fontsize=fszs6[reso])
+            plt.text(slx/2, 0.58-yshift, tstr, color=fontcol,
                      transform=fig.transFigure, fontproperties=prop,
                      ha='center', va='top', fontsize=fszs3[reso])
         else:
             plt.text(slx/2, 0.877-yshift, sectorstr, transform=fig.transFigure,
-                 ha='center', va='top', color=fontcol, fontproperties=prop,
-                 fontsize=fszs6[reso])
+                     ha='center', va='top', color=fontcol, fontproperties=prop,
+                     fontsize=fszs6[reso])
             plt.text(slx/2, 0.657-yshift, tstr,
-                     transform=fig.transFigure, ha='center', va='top', 
+                     transform=fig.transFigure, ha='center', va='top',
                      color=fontcol, fontproperties=prop, fontsize=fszs3[reso])
-    
+
     # label the neighboring chips in single CCD mode
     if single:
         # properties for the pointing arrows
@@ -666,10 +659,10 @@ for ct, idate in enumerate(udates):
             plt.text(slx + 9/32*(1-2*pad), 1-pad/2+tyoff, ntxt,
                      transform=fig.transFigure, ha='center', va='center',
                      color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
-            ax.annotate("", xy=(slx + 9/32*(1-2*pad), 1-pad/4+tyoff), 
+            ax.annotate("", xy=(slx + 9/32*(1-2*pad), 1-pad/4+tyoff),
                         xycoords='figure fraction', ha='center', va='center',
                         xytext=(slx + 9/32*(1-2*pad), 1-pad*3/4+tyoff),
-                        textcoords='figure fraction', arrowprops=arrow, 
+                        textcoords='figure fraction', arrowprops=arrow,
                         annotation_clip=False, color=fontcol)
         else:
             # bottom neighbor
@@ -677,13 +670,13 @@ for ct, idate in enumerate(udates):
             ncam = neighb // 4 + 1
             nccd = (neighb % 4) + 1
             ntxt = 'Cam {0}     CCD {1}'.format(ncam, nccd)
-            plt.text(slx + 9/32*(1-2*pad), pad/2+tyoff, ntxt, 
+            plt.text(slx + 9/32*(1-2*pad), pad/2+tyoff, ntxt,
                      transform=fig.transFigure, ha='center', va='center',
                      color=fontcol, fontproperties=prop, fontsize=fszs1[reso])
             ax.annotate("", xy=(slx + 9/32*(1-2*pad), pad/4+tyoff),
                         xycoords='figure fraction', ha='center', va='center',
                         xytext=(slx + 9/32*(1-2*pad), pad*3/4+tyoff),
-                        textcoords='figure fraction', arrowprops=arrow, 
+                        textcoords='figure fraction', arrowprops=arrow,
                         annotation_clip=False, color=fontcol)
         # right neighbor
         neighb = np.where((xlocs == xlocs[ind] + 1) & (ylocs == ylocs[ind]))[0]
@@ -698,14 +691,14 @@ for ct, idate in enumerate(udates):
             for char in ntxt:
                 ntxtstr += char + '\n'
             ntxtstr = ntxtstr[:-1]
-            plt.text(slx + 9/16*(1-2*pad)+pad/2*9/16, 0.5, ntxtstr, 
+            plt.text(slx + 9/16*(1-2*pad)+pad/2*9/16, 0.5, ntxtstr,
                      transform=fig.transFigure, ha='center', va='center',
                      color=fontcol, fontproperties=prop, fontsize=fszs1[reso],
                      multialignment='center')
-            ax.annotate("", xy=(slx + 9/16*(1-2*pad)+pad*3/4*9/16, 0.5), 
+            ax.annotate("", xy=(slx + 9/16*(1-2*pad)+pad*3/4*9/16, 0.5),
                         xycoords='figure fraction', ha='center', va='center',
-                        xytext=(slx + 9/16*(1-2*pad)+pad/4*9/16, 0.5), 
-                        textcoords='figure fraction', arrowprops=arrow, 
+                        xytext=(slx + 9/16*(1-2*pad)+pad/4*9/16, 0.5),
+                        textcoords='figure fraction', arrowprops=arrow,
                         annotation_clip=False, color=fontcol)
         # left neighbor
         neighb = np.where((xlocs == xlocs[ind] - 1) & (ylocs == ylocs[ind]))[0]
@@ -724,39 +717,39 @@ for ct, idate in enumerate(udates):
                      ha='center', va='center', color=fontcol,
                      fontproperties=prop, fontsize=fszs1[reso],
                      multialignment='center')
-            ax.annotate("", xy=(slx - pad*3/4*9/16, 0.5), 
+            ax.annotate("", xy=(slx - pad*3/4*9/16, 0.5),
                         xycoords='figure fraction', ha='center', va='center',
-                        xytext=(slx - pad/4*9/16, 0.5), 
+                        xytext=(slx - pad/4*9/16, 0.5),
                         textcoords='figure fraction', arrowprops=arrow,
                         annotation_clip=False, color=fontcol)
-    
+
     # in full FOV mode add the right and left labels if not in a data gap
     if not single and len(use) > 0 and nodiffct != nodiff:
         # too lazy to figure out how to do this right
-        # put newlines between every letter in the left and right labels in 
+        # put newlines between every letter in the left and right labels in
         # full FOV mode
         lstr = ''
         for char in leftlabel:
             lstr += char + '\n'
         lstr = lstr[:-1]
-        
+
         rstr = ''
         for char in rightlabel:
             rstr += char + '\n'
         rstr = rstr[:-1]
-        
-        plt.text(0.002, 0.5, lstr, transform=fig.transFigure, ha='left', 
-                 va='center', multialignment='center', color=fontcol, 
+
+        plt.text(0.002, 0.5, lstr, transform=fig.transFigure, ha='left',
+                 va='center', multialignment='center', color=fontcol,
                  fontproperties=prop, fontsize=fszs1[reso])
-        plt.text(0.994, 0.5, rstr, transform=fig.transFigure, ha='right', 
-                 va='center', multialignment='center', color=fontcol, 
+        plt.text(0.994, 0.5, rstr, transform=fig.transFigure, ha='right',
+                 va='center', multialignment='center', color=fontcol,
                  fontproperties=prop, fontsize=fszs1[reso])
-    
+
     # add the credits in the lower left
-    plt.text(0.008, 0.01, credit, transform=fig.transFigure, ha='left', 
-             va='bottom', multialignment='left', color=fontcol, 
+    plt.text(0.008, 0.01, credit, transform=fig.transFigure, ha='left',
+             va='bottom', multialignment='left', color=fontcol,
              fontproperties=prop, fontsize=fszs4[reso])
-    
+
     # put in the color bar axis
     if not single:
         ax2 = fig.add_axes([0.35, 0.1, 0.3, 0.05])
@@ -776,7 +769,7 @@ for ct, idate in enumerate(udates):
             ticklabs.append(str(itick))
         for ii in np.arange(1, len(ticklabs)-1):
             ticklabs[ii] = ''
-    
+
     # put in the color bar and adjust everything
     cbar = plt.colorbar(cbpl, orientation='horizontal', cax=ax2, extend='both')
     if diffs:
@@ -785,11 +778,11 @@ for ct, idate in enumerate(udates):
     else:
         cbar.set_label('Calibrated Flux', color=fontcol, fontproperties=prop,
                        fontsize=fszs1[reso])
-        
+
     cbar.outline.set_edgecolor(fontcol)
     cbar.outline.set_linewidth(3)
     cbar.set_ticks(ticker.LogLocator())
-    # for some reason need to clear the original ticks because I can't figure 
+    # for some reason need to clear the original ticks because I can't figure
     # out a way to change or remove them properly.
     cbar.ax.xaxis.set_ticks([])
     cbar.ax.xaxis.set_ticks([], minor=True)
@@ -806,13 +799,13 @@ for ct, idate in enumerate(udates):
         icbl.set_fontproperties(prop)
         icbl.set_fontsize(fszs4[reso])
 
-    cbar.ax.patch.set_alpha(0.)    
+    cbar.ax.patch.set_alpha(0.)
     # save the output image and then close it to save memory
     outstr = os.path.join(outdir, 'img{0:05d}.png'.format(ct))
     fig.savefig(outstr, facecolor=fig.get_facecolor(), edgecolor='none')
-        
+
     if makemovie:
-        plt.close(fig) 
+        plt.close(fig)
 
 # create the movie
 if makemovie:
@@ -821,4 +814,3 @@ if makemovie:
         os.remove(os.path.join(outdir, moviefile))
     command = moviescript + f' {shlex.quote(outdir+"/")} {moviefile} {fps}'
     subprocess.check_call(command, shell=True)
-
