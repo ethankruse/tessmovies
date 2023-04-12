@@ -17,7 +17,7 @@ from astropy.coordinates import SkyCoord
 # parameters for testing in ipython. These are overwritten if run from
 # the command line with proper arguments (see below)
 # options are Sector Diff(1 or 0), or else Sector Cam CCD Diff(1 or 0)
-sector = 27
+sector = 61
 cam = 0
 ccd = 0
 diffs = 0
